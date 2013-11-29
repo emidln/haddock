@@ -36,17 +36,20 @@ class API(object):
 
                     if hasattr(APIVersion, "api_%s" % (api["name"],)):
                         APIFunc = getattr(APIVersion, "api_%s" % (api["name"],))
-                        APIFunc.__name__ = str("api_v%s_%s" % (version, api["name"]))
+                        APIFunc.__name__ = str("api_v%s_%s" % (version,
+                            api["name"]))
                     else:
                         raise Exception("no %s in v%s" % (api["name"], version))
 
                     if version in processor["versions"]:
 
-                        args = (["/v%s/%s" % (version, processor["endpoint"])],
-                            {"methods": api["allowedMethods"]})
+                        args = ["/v%s/%s" % (version, processor["endpoint"])]
+                        kwargs = {"methods": api["allowedMethods"]})
 
-                        handler = _make_handler(self.service, APIFunc, args)
-                        setattr(self.service, "api_v%s_%s" % (version, api["name"]), handler)
+                        handler = _makeRoute(
+                            self.service, APIFunc, args, kwargs, processor)
+                        setattr(self.service,
+                            "api_v%s_%s" % (version, api["name"]), handler)
 
 
     def getService(self):
@@ -61,14 +64,15 @@ class API(object):
 
 # This code is based on the equiv in Praekelt's Aludel
 
-def _make_handler(service_class, handler_method, arguments):
+def _makeRoute(serviceClass, method, args, kw, APIInfo):
     args, kw = arguments
 
-    @wraps(handler_method)
+    @wraps(method)
     def wrapper(*args, **kw):
-        return _handler_wrapper(handler_method, service_class, *args, **kw)
-    update_wrapper(wrapper, handler_method)
-    route = service_class.app.route(*args, **kw)
+        return _handler_wrapper(method, serviceClass, *args, **kw)
+
+    update_wrapper(wrapper, method)
+    route = serviceClass.app.route(*args, **kw)
 
     return route(wrapper)
 

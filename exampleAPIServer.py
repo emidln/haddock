@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from haddock import API
 
 
@@ -32,4 +34,5 @@ class APIExample(object):
 
 
 myAPI = API(APIExample, "exampleAPI.json")
-
+app = myAPI.getApp()
+app.run("127.0.0.1", 8094)
