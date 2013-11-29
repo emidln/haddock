@@ -2,7 +2,7 @@ from haddock import API
 
 
 
-class HawkOwlAPIExample(object):
+class APIExample(object):
 
     class v1(object):
 
@@ -12,7 +12,7 @@ class HawkOwlAPIExample(object):
         @staticmethod
         def api_getWeather(config, request):
 
-            return "I am %s" % repr(config)
+            return "weather v1"
 
         @staticmethod
         def api_getMail(config, request):
@@ -28,8 +28,8 @@ class HawkOwlAPIExample(object):
         @staticmethod
         def api_getWeather(config, request):
 
-            return "HAVE SOME WEATHER v2"
+            return "weather v2"
 
 
-myAPI = API(HawkOwlAPIExample, "exampleAPI.json")
+myAPI = API(APIExample, "exampleAPI.json")
 

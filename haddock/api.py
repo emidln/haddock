@@ -48,9 +48,15 @@ class API(object):
                         handler = _make_handler(self.service, APIFunc, args)
                         setattr(self.service, "api_v%s_%s" % (version, api["name"]), handler)
 
+
     def getService(self):
 
-        return self.service.app.resource()                   
+        return self.service.app.resource()
+
+
+    def getApp(self):
+
+        return self.service.app
 
 
 # This code is based on the equiv in Praekelt's Aludel
