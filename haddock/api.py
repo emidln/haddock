@@ -46,17 +46,15 @@ class API(object):
                             {"methods": api["allowedMethods"]})
 
                         handler = _make_handler(self.service, APIFunc, args)
-                        print "api_v%s_%s" % (version, api["name"])
                         setattr(self.service, "api_v%s_%s" % (version, api["name"]), handler)
 
-        print inspect.getmembers(self.service)
+    def getService(self):
 
-        self.service.app.run("127.0.0.1", 8092)
-
-                    
+        return self.service.app.resource()                   
 
 
-#from aludel
+# This code is based on the equiv in Praekelt's Aludel
+
 def _make_handler(service_class, handler_method, arguments):
     args, kw = arguments
 
@@ -69,7 +67,7 @@ def _make_handler(service_class, handler_method, arguments):
     return route(wrapper)
 
 def _handler_wrapper(func, self, request, *args, **kw):
-    d = maybeDeferred(func, self, request, *args, **kw)
+    d = maybeDeferred(func, self, request)
     #d.addCallback(format_response, request)
     #if hasattr(self, 'handle_api_error'):
     #    d.addErrback(self.handle_api_error, request)

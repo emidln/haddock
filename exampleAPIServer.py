@@ -12,7 +12,7 @@ class HawkOwlAPIExample(object):
         @staticmethod
         def api_getWeather(config, request):
 
-            return "HAVE SOME WEATHER v1"
+            return "I am %s" % repr(config)
 
         @staticmethod
         def api_getMail(config, request):
@@ -32,3 +32,4 @@ class HawkOwlAPIExample(object):
 
 
 myAPI = API(HawkOwlAPIExample, "exampleAPI.json")
+
