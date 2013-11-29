@@ -13,10 +13,18 @@ import json
 class ServiceObject(object):
     """
     Service object!
+
+    @ivar app: A L{Klein} app.
     """
 
 
 class API(object):
+    """
+    A Haddock API object.
+
+    @ivar config: The API description language configuration.
+    @ivar service: The class that Haddock puts everything into.
+    """
 
     def __init__(self, APIClass, configPath):
 
@@ -37,31 +45,42 @@ class API(object):
 
                 for processor in api["processors"]:
 
+                    endpointLoc = "/v%s/%s" % (version, processor["endpoint"])
+                    newFuncName = str("api_v%s_%s" % (version, api["name"]))
+
                     if hasattr(APIVersion, "api_%s" % (api["name"],)):
                         APIFunc = getattr(APIVersion, "api_%s" % (api["name"],))
-                        APIFunc.__name__ = str("api_v%s_%s" % (version,
-                            api["name"]))
+                        APIFunc.__name__ = newFuncName
                     else:
                         raise Exception("no %s in v%s" % (api["name"], version))
 
                     if version in processor["versions"]:
 
-                        args = ["/v%s/%s" % (version, processor["endpoint"])]
+                        args = [endpointLoc]
                         kwargs = {"methods": api["allowedMethods"]}
 
-                        handler = _makeRoute(
+                        route = _makeRoute(
                             self.service, APIFunc, args, kwargs, processor)
-                        setattr(self.service,
-                            "api_v%s_%s" % (version, api["name"]), handler)
+                        setattr(self.service, newFuncName, route)
 
 
     def getService(self):
+        """
+        Returns the service object.
+        """
+        return self.service
 
+
+    def getResource(self):
+        """
+        Returns a Resource, from the Klein app.
+        """
         return self.service.app.resource()
 
-
     def getApp(self):
-
+        """
+        Returns the Klein app.
+        """
         return self.service.app
 
 

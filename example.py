@@ -33,6 +33,6 @@ class APIExample(object):
 
 
 
-myAPI = API(APIExample, "exampleAPI.json")
-app = myAPI.getApp()
-app.run("127.0.0.1", 8094)
+myAPI = API(APIExample, "examples/exampleAPI.json")
+service = myAPI.getService()
+service.app.run("127.0.0.1", 8094)
