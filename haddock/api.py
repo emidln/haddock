@@ -1,6 +1,9 @@
 from klein import Klein
 
 from functools import wraps, update_wrapper
+
+from twisted.python import log
+from twisted.python.failure import Failure
 from twisted.internet.defer import maybeDeferred
 
 import inspect
@@ -77,20 +80,35 @@ class APIError(Exception):
 class BadRequestParams(APIError):
     code = 400
 
+class BadResponseParams(APIError):
+    code = 500
+
 
 
 def _makeRoute(serviceClass, method, args, kw, APIInfo):
 
     @wraps(method)
     def wrapper(*args, **kw):
-        return _setupWrapper(method, serviceClass, APIInfo, *args, **kw)
+        return _setup(method, serviceClass, APIInfo, *args, **kw)
 
     update_wrapper(wrapper, method)
     route = serviceClass.app.route(*args, **kw)
 
     return route(wrapper)
 
+def _setup(func, self, APIInfo, request, *args, **kw):
 
+    try:
+
+        d = _setupWrapper(func, self, APIInfo, request, *args, **kw)
+        d.addErrback(_handleAPIError, request)
+        return d
+
+    except Exception as exp:
+
+        fail = Failure()
+
+        return _handleAPIError(fail, request)
 
 def _setupWrapper(func, self, APIInfo, request, *args, **kw):
 
@@ -107,13 +125,34 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
         requestContent = json.loads(request.content.read())
         params = _getParams(params, APIInfo)
 
-
     d = maybeDeferred(func, self, request, params)
-    #d.addCallback(format_response, request)
-    #if hasattr(self, 'handle_api_error'):
-    #    d.addErrback(self.handle_api_error, request)
-    #d.addErrback(_handle_api_error, request)
+
+    if APIInfo.get("returnParams"):
+        d.addCallback(_verifyReturnParams, APIInfo)
+
+    d.addCallback(_formatResponse, request)
+
     return d
+
+
+
+def _verifyReturnParams(result, APIInfo):
+
+    keys = set(result.keys())
+    required = set(APIInfo.get("returnParams", set()))
+    optional = set(APIInfo.get("optionalReturnParams", set()))
+
+    missing = required - keys
+    extra = keys - (required | optional)
+
+    if missing:
+        raise BadResponseParams("Missing response parameters: '%s'" % (
+            "', '".join(sorted(missing))))
+    if extra:
+        raise BadResponseParams("Unexpected response parameters: '%s'" % (
+            "', '".join(sorted(extra))))
+
+    return result
 
 
 
@@ -134,3 +173,24 @@ def _getParams(params, APIInfo):
             "', '".join(sorted(extra))))
 
     return params
+
+
+def _handleAPIError(failure, request):
+
+    error = failure.value
+    if not failure.check(APIError):
+        log.err(failure)
+        error = APIError('Internal server error.')
+
+    request.setHeader('Content-Type', 'application/json')
+    request.setResponseCode(error.code)
+    return json.dumps({
+        'error': error.message,
+    })
+
+
+def _formatResponse(result, request):
+
+    request.setHeader('Content-Type', 'application/json')
+    return json.dumps(result)
+

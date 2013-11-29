@@ -14,7 +14,7 @@ class APIExample(object):
         @staticmethod
         def api_getWeather(config, request, params):
 
-            return "weather v1"
+            return "I will break!"
 
         @staticmethod
         def api_getMail(config, request, params):
@@ -30,7 +30,7 @@ class APIExample(object):
         @staticmethod
         def api_getWeather(config, request, params):
 
-            return repr(params)
+            return {"temperature": 30, "windSpeed": 20, "isRaining": False}
 
 
 myAPI = API(APIExample, "exampleAPI.json")
