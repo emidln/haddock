@@ -75,14 +75,11 @@ class APIError(Exception):
         if code is not None:
             self.code = code
 
-
-
 class BadRequestParams(APIError):
     code = 400
 
 class BadResponseParams(APIError):
     code = 500
-
 
 
 def _makeRoute(serviceClass, method, args, kw, APIInfo):
@@ -96,19 +93,16 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo):
 
     return route(wrapper)
 
+
 def _setup(func, self, APIInfo, request, *args, **kw):
 
     try:
-
         d = _setupWrapper(func, self, APIInfo, request, *args, **kw)
         d.addErrback(_handleAPIError, request)
         return d
-
     except Exception as exp:
+        return _handleAPIError(Failure(), request)
 
-        fail = Failure()
-
-        return _handleAPIError(fail, request)
 
 def _setupWrapper(func, self, APIInfo, request, *args, **kw):
 
@@ -116,12 +110,10 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
     paramsType = APIInfo.get("paramsType", "url")
 
     if paramsType == "url":
-
         params = _getParams(request.args, APIInfo)
         params = dict((k, v[0]) for k, v in params.iteritems())
 
     elif paramsType == "jsonbody":
-
         requestContent = json.loads(request.content.read())
         params = _getParams(params, APIInfo)
 
@@ -133,7 +125,6 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
     d.addCallback(_formatResponse, request)
 
     return d
-
 
 
 def _verifyReturnParams(result, APIInfo):
@@ -153,7 +144,6 @@ def _verifyReturnParams(result, APIInfo):
             "', '".join(sorted(extra))))
 
     return result
-
 
 
 def _getParams(params, APIInfo):
@@ -193,4 +183,3 @@ def _formatResponse(result, request):
 
     request.setHeader('Content-Type', 'application/json')
     return json.dumps(result)
-

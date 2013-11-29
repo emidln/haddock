@@ -3,7 +3,6 @@
 from haddock import API
 
 
-
 class APIExample(object):
 
     class v1(object):
@@ -31,6 +30,7 @@ class APIExample(object):
         def api_getWeather(config, request, params):
 
             return {"temperature": 30, "windSpeed": 20, "isRaining": False}
+
 
 
 myAPI = API(APIExample, "exampleAPI.json")
