@@ -16,12 +16,14 @@
 				{	
 					"versions": [1],
 					"endpoint": "weather",
+					"paramsType": "url",
 					"optionalParams": ["countryCode"],
 					"requiredParams": ["postcode", "unixTimestamp"]
 				},
 				{
 					"versions": [2],
 					"endpoint": "weather",
+					"paramsType": "url",
 					"requiredParams": ["postcode", "countryCode", "unixTimestamp"],
 					"returnParams": ["temperature", "windSpeed", "isRaining"]
 				}
@@ -36,6 +38,7 @@
 				{
 					"versions": [1, 2],
 					"endpoint": "mail",
+					"paramsType": "url",
 					"requiredParams": ["to"],
 					"returnFormat": "list",
 					"returnParams": ["to", "from", "subject", "content", "sentTimestamp"]

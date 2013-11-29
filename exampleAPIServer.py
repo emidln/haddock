@@ -12,12 +12,12 @@ class APIExample(object):
             pass
 
         @staticmethod
-        def api_getWeather(config, request):
+        def api_getWeather(config, request, params):
 
             return "weather v1"
 
         @staticmethod
-        def api_getMail(config, request):
+        def api_getMail(config, request, params):
 
             return "mail v1 and 2"
 
@@ -28,9 +28,9 @@ class APIExample(object):
             self.api_getMail = outer.v1.api_getMail
 
         @staticmethod
-        def api_getWeather(config, request):
+        def api_getWeather(config, request, params):
 
-            return "weather v2"
+            return repr(params)
 
 
 myAPI = API(APIExample, "exampleAPI.json")
