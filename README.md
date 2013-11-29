@@ -6,7 +6,7 @@ Haddock is a micro-framework for creating APIs, as well as a JSON-based API desc
 Why?
 ----
 
-Because I liked the look of Praekelt's Aludel (https://github.com/praekelt/aludel) but it didn't kind of work how I thought it would. So, I wrote something to work how I thought it would.
+Because I liked the look of Praekelt's Aludel (https://github.com/praekelt/aludel) but it didn't kind of work how I thought it would. So, I wrote something similar, to play around!
 
 How do I use it?
 ----------------
