@@ -73,8 +73,11 @@ class APIError(Exception):
             self.code = code
 
 
+
 class BadRequestParams(APIError):
     code = 400
+
+
 
 def _makeRoute(serviceClass, method, args, kw, APIInfo):
 
@@ -86,6 +89,8 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo):
     route = serviceClass.app.route(*args, **kw)
 
     return route(wrapper)
+
+
 
 def _setupWrapper(func, self, APIInfo, request, *args, **kw):
 
@@ -109,6 +114,8 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
     #    d.addErrback(self.handle_api_error, request)
     #d.addErrback(_handle_api_error, request)
     return d
+
+
 
 def _getParams(params, APIInfo):
 
