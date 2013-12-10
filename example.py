@@ -2,7 +2,7 @@
 
 import json
 
-from haddock import API
+from haddock.api import API
 from haddock.test.test_haddock import APIExample, ExampleServiceClass
 
 myAPI = API(APIExample, json.load(open("haddock/test/exampleAPI.json")), serviceClass=ExampleServiceClass())

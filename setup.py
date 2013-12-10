@@ -8,7 +8,7 @@ from haddock import version
 setup(
     name='haddock',
     description='Mini-Framework for making APIs.',
-    version=version.base(),
+    version=version,
     author='HawkOwl',
     author_email='hawkowl@atleastfornow.net',
     url='https://github.com/hawkowl/haddock',
@@ -33,5 +33,5 @@ setup(
     install_requires=[
         "klein"
         ],
-    long_description=file('README.md').read()
+    long_description=file('README.rst').read()
 )
