@@ -41,12 +41,11 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
         def _cb(result):
 
             [error] = self.flushLoggedErrors()
-
             self.assertIsInstance(error.value, AttributeError)
-            self.assertIsInstance(result.value, rm.HaddockAPIError)
+            self.assertIsNone(result)
 
-        return rm.testItem(self.api.service.api_v1_getMail,
-            "/v1/mail", {"to": "me"}).addBoth(_cb)
+        return rm.testItem(self.api.service.api_v1_getWeather, "/v1/weather",
+            {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
 
@@ -61,19 +60,19 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
         config = json.load(open(path))
 
         self.api = haddock.API(APIExample, config,
-            serviceObject=ExampleServiceClass())
+            serviceClass=ExampleServiceClass())
 
     def test_usesServiceClass(self):
 
         def _cb(result):
 
-            [error] = self.flushLoggedErrors()
+            expectedResult = json.dumps(json.loads("""
+                {"status": "success", "data": {"windSpeed": 20, "temperature": 30, "isRaining": false}}
+            """))
+            self.assertEqual(expectedResult, result)
 
-            self.assertIsInstance(error.value, AttributeError)
-            self.assertIsInstance(result.value, rm.HaddockAPIError)
-
-        return rm.testItem(self.api.service.api_v1_getMail,
-            "/v1/mail", {"to": "me"}).addBoth(_cb)
+        return rm.testItem(self.api.service.api_v1_getWeather, "/v1/weather",
+            {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
 

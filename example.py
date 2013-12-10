@@ -3,8 +3,8 @@
 import json
 
 from haddock import API
-from haddock.test.test_haddock import APIExample
+from haddock.test.test_haddock import APIExample, ExampleServiceClass
 
-myAPI = API(APIExample, json.load(open("haddock/test/exampleAPI.json")))
+myAPI = API(APIExample, json.load(open("haddock/test/exampleAPI.json")), serviceClass=ExampleServiceClass())
 service = myAPI.getService()
 service.app.run("127.0.0.1", 8094)

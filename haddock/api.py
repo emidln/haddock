@@ -24,17 +24,17 @@ class API(object):
     @ivar config: The API description language configuration.
     @ivar service: The class that Haddock puts everything into.
     """
-    def __init__(self, APIClass, config, serviceObject=None):
+    def __init__(self, APIClass, config, serviceClass=None):
         """
         Initialise a Haddock API.
 
 
         """
         self.config = config
-        if not serviceObject:
+        if not serviceClass:
             self.service = _DefaultServiceObject()
         else:
-            self.service = serviceObject
+            self.service = serviceClass
         self.service.app = Klein()
 
         for version in self.config["metadata"]["versions"]:
@@ -134,8 +134,6 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
 
     if paramsType == "url":
         params = _getParams(request.args, APIInfo)
-        params = dict((k, v[0]) for k, v in params.iteritems())
-
     elif paramsType == "jsonbody":
         requestContent = json.loads(request.content.read())
         params = _getParams(params, APIInfo)
@@ -225,14 +223,21 @@ def _getParams(params, APIInfo):
 
 def _handleAPIError(failure, request):
 
+    if request.finished:
+        return
+
     error = failure.value
+    errorcode = 500
     if not isinstance(error, BadRequestParams):
         log.err(failure)
 
     request.setHeader('Content-Type', 'application/json')
-    request.setResponseCode(error.code)
+    if hasattr(error, "code"):
+        errorcode = error.code
 
-    if error.code == 500:
+    request.setResponseCode(errorcode)
+
+    if errorcode == 500:
         errstatus = "error"
         errmessage = "Internal server error."
     else:
@@ -244,10 +249,16 @@ def _handleAPIError(failure, request):
         "data": errmessage
     }
 
+    request.write(json.dumps(response))
+    request.finish()
     return json.dumps(response)
 
 
+
 def _formatResponse(result, request):
+
+    if request.finished:
+        return
 
     request.setHeader('Content-Type', 'application/json')
 

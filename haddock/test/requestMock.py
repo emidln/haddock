@@ -106,10 +106,14 @@ def testItem(item, path, params):
 
     def _cb(result):
 
-        res = json.loads(result)
+        try:
+            res = json.loads(result)
+            if res.get("error"):
+                raise HaddockAPIError(res["error"])
+        except Exception, e:
+            res = result
 
-        if res.get("error"):
-            raise HaddockAPIError(res["error"])
+        return result
 
     myPath = requestMock(path, body=json.dumps(params), args=params)
  
