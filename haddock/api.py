@@ -224,16 +224,18 @@ def _getParams(params, APIInfo):
 def _handleAPIError(failure, request):
 
     if request.finished:
+        # If we've already hit an error, don't return any more.
         return
 
     error = failure.value
     errorcode = 500
+
     if not isinstance(error, BadRequestParams):
         log.err(failure)
-
-    request.setHeader('Content-Type', 'application/json')
     if hasattr(error, "code"):
         errorcode = error.code
+
+    request.setHeader('Content-Type', 'application/json')
 
     request.setResponseCode(errorcode)
 
@@ -258,6 +260,8 @@ def _handleAPIError(failure, request):
 def _formatResponse(result, request):
 
     if request.finished:
+        # If we've hit an error, we can't return data, because we've already
+        # shut the connection.
         return
 
     request.setHeader('Content-Type', 'application/json')
