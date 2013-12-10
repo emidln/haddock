@@ -7,7 +7,7 @@ from twisted.python.failure import Failure
 from twisted.internet.defer import maybeDeferred
 
 import inspect
-
+import json
 
 class _DefaultServiceObject(object):
     """
@@ -136,6 +136,7 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
         params = _getParams(params, APIInfo)
 
     d = maybeDeferred(func, self, request, params)
+    d.addErrback(_handleAPIError, request)
 
     if APIInfo.get("returnParams"):
         d.addCallback(_verifyReturnParams, APIInfo)
@@ -147,7 +148,11 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
 
 def _verifyReturnParams(result, APIInfo):
 
-    keys = set(result.keys())
+    if isinstance(result, basestring):
+        keys = set(json.loads(result).keys())
+    else:
+        keys = set(result.keys())
+
     required = set(APIInfo.get("returnParams", set()))
     optional = set(APIInfo.get("optionalReturnParams", set()))
 
@@ -166,7 +171,11 @@ def _verifyReturnParams(result, APIInfo):
 
 def _getParams(params, APIInfo):
 
-    keys = set(params.keys())
+    if params:
+        keys = set(params.keys())
+    else:
+        keys = set()
+
     required = set(APIInfo.get("requiredParams", set()))
     optional = set(APIInfo.get("optionalParams", set()))
 

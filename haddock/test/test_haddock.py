@@ -1,11 +1,17 @@
 from twisted.trial import unittest
 
+import haddock.test.requestMock as rm
+
 import haddock
+import haddock.api
+import inspect
+import exceptions
 import json
 import os
 
 
 class HaddockDefaultServiceObjTests(unittest.TestCase):
+
 
     def setUp(self):
 
@@ -15,10 +21,41 @@ class HaddockDefaultServiceObjTests(unittest.TestCase):
 
         self.api = haddock.API(APIExample, config)
 
+
     def test_createdStructure(self):
 
-        print repr(self.api)
+        res = inspect.getmembers(self.api.service, predicate=inspect.isfunction)
+        functions = []
+        
+        for item in res:
+            functions.append(item[0])
 
+        self.assertIn("api_v1_getMail", functions)
+        self.assertIn("api_v2_getMail", functions)
+        self.assertIn("api_v1_getWeather", functions)
+        self.assertIn("api_v2_getWeather", functions)
+
+
+    def test_blankServiceClass(self):
+
+        def _cb(result):
+
+            [error] = self.flushLoggedErrors()
+
+            self.assertIsInstance(error.value, AttributeError)
+            self.assertIsInstance(result.value, rm.HaddockAPIError)
+
+        return rm.testItem(self.api.service.api_v1_getMail,
+            "/v1/mail", {"to": "me"}).addBoth(_cb)
+
+
+
+
+
+class ExampleServiceClass(object):
+
+    def doSomething(self):
+        return "test!"
 
 
 class APIExample(object):
@@ -36,7 +73,7 @@ class APIExample(object):
         @staticmethod
         def api_getMail(config, request, params):
 
-            return "mail v1 and 2"
+            return config.doSomething()
 
     class v2(object):
 
