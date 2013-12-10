@@ -9,7 +9,7 @@ from twisted.internet.defer import maybeDeferred
 import inspect
 import json
 
-class _DefaultServiceObject(object):
+class _DefaultServiceClass(object):
     """
     Service object!
 
@@ -28,11 +28,14 @@ class API(object):
         """
         Initialise a Haddock API.
 
-
+        @param APIClass: The class that contains the API functions.
+        @param config: The Haddock API definition configuration L{dict}.
+        @param serviceClass: A custom Service Class that contains your app's
+        configuration and other functions.
         """
         self.config = config
         if not serviceClass:
-            self.service = _DefaultServiceObject()
+            self.service = _DefaultServiceClass()
         else:
             self.service = serviceClass
         self.service.app = Klein()
