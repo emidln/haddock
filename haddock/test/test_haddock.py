@@ -94,12 +94,18 @@ class APIExample(object):
         @staticmethod
         def api_getWeather(config, request, params):
 
-            return "I will break!"
+            return config.doSomething()
 
         @staticmethod
         def api_getMail(config, request, params):
 
-            return config.doSomething()
+            return [{
+                "from": "you",
+                "to": "me",
+                "subject": "hello",
+                "sentTimestamp": 1386679094.0,
+                "content": "hi there!"
+            }]
 
     class v2(object):
 
