@@ -33,5 +33,5 @@ setup(
     install_requires=[
         "klein"
         ],
-    long_description=file('README.rst').read()
+    long_description=file('README.md').read()
 )
