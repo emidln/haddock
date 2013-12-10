@@ -2,7 +2,6 @@ from twisted.trial import unittest
 
 import haddock.test.requestMock as rm
 
-import haddock
 import haddock.api
 import inspect
 import exceptions
@@ -19,7 +18,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             os.path.dirname(__file__)), 'exampleAPI.json')
         config = json.load(open(path))
 
-        self.api = haddock.API(APIExample, config)
+        self.api = haddock.api.API(APIExample, config)
 
 
     def test_createdStructure(self):
@@ -59,7 +58,7 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             os.path.dirname(__file__)), 'exampleAPI.json')
         config = json.load(open(path))
 
-        self.api = haddock.API(APIExample, config,
+        self.api = haddock.api.API(APIExample, config,
             serviceClass=ExampleServiceClass())
 
     def test_usesServiceClass(self):
