@@ -1,7 +1,24 @@
-#!/usr/bin/python
+from twisted.trial import unittest
 
-from haddock import API
+import haddock
 import json
+import os
+
+
+class HaddockDefaultServiceObjTests(unittest.TestCase):
+
+    def setUp(self):
+
+        path = os.path.join(os.path.abspath(
+            os.path.dirname(__file__)), 'exampleAPI.json')
+        config = json.load(open(path))
+
+        self.api = haddock.API(APIExample, config)
+
+    def test_createdStructure(self):
+
+        print repr(self.api)
+
 
 
 class APIExample(object):
@@ -31,9 +48,3 @@ class APIExample(object):
         def api_getWeather(config, request, params):
 
             return {"temperature": 30, "windSpeed": 20, "isRaining": False}
-
-
-
-myAPI = API(APIExample, json.load(open("examples/exampleAPI.json")))
-service = myAPI.getService()
-service.app.run("127.0.0.1", 8094)

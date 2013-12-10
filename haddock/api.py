@@ -8,9 +8,8 @@ from twisted.internet.defer import maybeDeferred
 
 import inspect
 
-import json
 
-class ServiceObject(object):
+class _DefaultServiceObject(object):
     """
     Service object!
 
@@ -26,15 +25,16 @@ class API(object):
     @ivar service: The class that Haddock puts everything into.
     """
 
-    def __init__(self, APIClass, configPath):
+    def __init__(self, APIClass, config, serviceObject=None):
 
-        self.config = json.load(open(configPath))
-        self.service = ServiceObject()
+        self.config = config
+        if not serviceObject:
+            self.service = _DefaultServiceObject()
+        else:
+            self.service = serviceObject
         self.service.app = Klein()
 
-        versions = self.config["metadata"]["versions"]
-
-        for version in versions:
+        for version in self.config["metadata"]["versions"]:
 
             if hasattr(APIClass, "v%s" % (version,)):
                 APIVersion = getattr(APIClass, "v%s" % (version))(APIClass)
@@ -42,7 +42,6 @@ class API(object):
                 raise Exception("No v%s" % (version,))
 
             for api in self.config["api"]:
-
                 for processor in api["processors"]:
 
                     endpointLoc = "/v%s/%s" % (version, processor["endpoint"])
