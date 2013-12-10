@@ -24,9 +24,12 @@ class API(object):
     @ivar config: The API description language configuration.
     @ivar service: The class that Haddock puts everything into.
     """
-
     def __init__(self, APIClass, config, serviceObject=None):
+        """
+        Initialise a Haddock API.
 
+
+        """
         self.config = config
         if not serviceObject:
             self.service = _DefaultServiceObject()
@@ -76,11 +79,13 @@ class API(object):
         """
         return self.service.app.resource()
 
+
     def getApp(self):
         """
         Returns the Klein app.
         """
         return self.service.app
+
 
 
 # The code below is partially based on the equiv in Praekelt's Aludel
@@ -148,11 +153,39 @@ def _setupWrapper(func, self, APIInfo, request, *args, **kw):
 
 def _verifyReturnParams(result, APIInfo):
 
-    if isinstance(result, basestring):
-        keys = set(json.loads(result).keys())
-    else:
-        keys = set(result.keys())
+    returnFormat = APIInfo.get("returnFormat", "dict")
 
+    if returnFormat == "dict":
+
+        if isinstance(result, basestring):
+            keys = set(json.loads(result).keys())
+        else:
+            keys = set(result.keys())
+
+        if not isinstance(items, dict):
+            raise BadResponseParams("Result did not match the return format.")
+
+        _checkReturnParamsDict(result, APIInfo)
+
+    elif returnFormat == "list":
+
+        if isinstance(result, basestring):
+            items = json.loads(result)
+        else:
+            items = result
+
+        if not isinstance(items, list):
+            raise BadResponseParams("Result did not match the return format.")
+
+        for item in items:
+            _checkReturnParamsDict(item, APIInfo)
+
+    return result
+
+
+def _checkReturnParamsDict(result, APIInfo):
+
+    keys = set(result.keys())
     required = set(APIInfo.get("returnParams", set()))
     optional = set(APIInfo.get("optionalReturnParams", set()))
 
@@ -165,8 +198,6 @@ def _verifyReturnParams(result, APIInfo):
     if extra:
         raise BadResponseParams("Unexpected response parameters: '%s'" % (
             "', '".join(sorted(extra))))
-
-    return result
 
 
 def _getParams(params, APIInfo):
@@ -195,18 +226,34 @@ def _getParams(params, APIInfo):
 def _handleAPIError(failure, request):
 
     error = failure.value
-    if not failure.check(APIError):
+    if not isinstance(error, BadRequestParams):
         log.err(failure)
-        error = APIError('Internal server error.')
 
     request.setHeader('Content-Type', 'application/json')
     request.setResponseCode(error.code)
-    return json.dumps({
-        'error': error.message,
-    })
+
+    if error.code == 500:
+        errstatus = "error"
+        errmessage = "Internal server error."
+    else:
+        errstatus = "fail"
+        errmessage = error.message
+
+    response = {
+        "status": errstatus,
+        "data": errmessage
+    }
+
+    return json.dumps(response)
 
 
 def _formatResponse(result, request):
 
     request.setHeader('Content-Type', 'application/json')
-    return json.dumps(result)
+
+    response = {
+        "status": "success",
+        "data": result
+    }
+
+    return json.dumps(response)

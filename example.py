@@ -19,7 +19,14 @@ class APIExample(object):
         @staticmethod
         def api_getMail(config, request, params):
 
-            return "mail v1 and 2"
+            return [{
+
+                "from": "you",
+                "to": "me",
+                "subject": "hello",
+                "sentTimestamp": 1386679094.0
+
+            }]
 
     class v2(object):
 
@@ -34,6 +41,6 @@ class APIExample(object):
 
 
 
-myAPI = API(APIExample, json.load(open("examples/exampleAPI.json")))
+myAPI = API(APIExample, json.load(open("haddock/test/exampleAPI.json")))
 service = myAPI.getService()
 service.app.run("127.0.0.1", 8094)

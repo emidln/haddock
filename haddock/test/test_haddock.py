@@ -10,11 +10,11 @@ import json
 import os
 
 
-class HaddockDefaultServiceObjTests(unittest.TestCase):
-
-
+class HaddockDefaultServiceClassTests(unittest.TestCase):
+    """
+    Haddock tests using the built in (blank) Default Service Class.
+    """
     def setUp(self):
-
         path = os.path.join(os.path.abspath(
             os.path.dirname(__file__)), 'exampleAPI.json')
         config = json.load(open(path))
@@ -50,12 +50,38 @@ class HaddockDefaultServiceObjTests(unittest.TestCase):
 
 
 
+class HaddockExampleServiceClassTests(unittest.TestCase):
+    """
+    Haddock tests using ExampleServiceClass, an example for a user-specified
+    Service Class.
+    """
+    def setUp(self):
+        path = os.path.join(os.path.abspath(
+            os.path.dirname(__file__)), 'exampleAPI.json')
+        config = json.load(open(path))
+
+        self.api = haddock.API(APIExample, config,
+            serviceObject=ExampleServiceClass())
+
+    def test_usesServiceClass(self):
+
+        def _cb(result):
+
+            [error] = self.flushLoggedErrors()
+
+            self.assertIsInstance(error.value, AttributeError)
+            self.assertIsInstance(result.value, rm.HaddockAPIError)
+
+        return rm.testItem(self.api.service.api_v1_getMail,
+            "/v1/mail", {"to": "me"}).addBoth(_cb)
+
 
 
 class ExampleServiceClass(object):
 
     def doSomething(self):
-        return "test!"
+        return {"temperature": 30, "windSpeed": 20, "isRaining": False}
+
 
 
 class APIExample(object):
