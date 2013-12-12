@@ -21,12 +21,11 @@
 
 			<div class="pure-menu pure-menu-open">
 
-				<a class="pure-menu-heading">API Information for v{{ version }}</a>
-
 				<ul>
+					<li class="pure-menu-heading">API Information for v{{ version }}</li>
 					{% for apiTop in APIs %}
 						{% set api = apiTop[0] %}
-						<li><a href="#api_{{api.name}}">{{api.name}}</a></li>
+						<li><a href="#api_{{api.name}}">{{api.friendlyName}}</a></li>
 					{% endfor %}
 
 				</ul>
@@ -37,21 +36,25 @@
 
 		<div class="pure-u-4-5" id="content">
 
-			{% for apiTop in APIs %}
+			<div id="content-inner">
 
-				{% set api = apiTop[0] %}
-				{% set processors = apiTop[1] %}
+				{% for apiTop in APIs %}
 
-				<h1 id="api_{{api.name}}">{{api.name}} <small>({{api.friendlyName}})</small></h1>
-				<p>{{api.description}}</p>
+					{% set api = apiTop[0] %}
+					{% set processors = apiTop[1] %}
 
-				{% for processor in processors %}
+					<h1 id="api_{{api.name}}">{{api.name}} <small>({{api.friendlyName}})</small></h1>
+					<p>{{api.description}}</p>
 
-					<h2>/v{{version}}/{{processor.endpoint}}</h2>
+					{% for processor in processors %}
+
+						<h2>/v{{version}}/{{processor.endpoint}}</h2>
+
+					{% endfor %}
 
 				{% endfor %}
 
-			{% endfor %}
+			</div>
 
 		</div>
 
