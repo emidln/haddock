@@ -1,0 +1,99 @@
+{
+
+    "metadata": {
+        "name": "APIExample",
+        "friendlyName": "HawkOwl's API Example",
+        "versions": [1, 2],
+        "apiInfo": true
+    },
+
+    "api": [
+        {
+            "name": "weather",
+            "friendlyName": "Weather",
+            "description": "Accessing weather.",
+            "endpoint": "weather",
+            "getProcessors": [
+                {   
+                    "versions": [1],
+                    "paramsType": "url",
+                    "optionalParams": ["countryCode"],
+                    "requiredParams": ["postcode", "unixTimestamp"]
+                },
+                {
+                    "versions": [2],
+                    "paramsType": "url",
+                    "requiredParams": ["postcode", "countryCode", "unixTimestamp"],
+                    "returnParams": ["temperature", "windSpeed", "isRaining"]
+                }
+            ]
+        },
+        {
+            "name": "motd",
+            "friendlyName": "Message Of the Day",
+            "description": "Accessing and setting the Message Of The Day",
+            "endpoint": "motd",
+            "getProcessors": [
+                {
+                    "versions": [1, 2],
+                    "paramsType": "url",
+                    "returnFormat": "dict",
+                    "returnParams": [
+                        {
+                            "param": "message",
+                            "description": "The message of the day.",
+                            "type": "string"
+                        },
+                        {
+                            "param": "setBy",
+                            "description": "The username that last set the MOTD.",
+                            "type": "string"
+                        },
+                        {
+                            "param": "setWhen",
+                            "description": "The UNIX timestamp of when the MOTD was set.",
+                            "type": "numeric"
+                        }
+                    ]
+                }
+            ],
+            "postProcessors": [
+                {
+                    "versions": [1, 2],
+                    "paramsType": "url",
+                    "returnFormat": "dict",
+                    "requiredParams": [
+                        {
+                            "param": "message",
+                            "description": "The message of the day.",
+                            "type": "string"
+                        },
+                        {
+                            "param": "username",
+                            "description": "The username of the person setting the MOTD.",
+                            "type": "string"
+                        }
+                    ],
+                    "returnParams": [
+                        {
+                            "param": "status",
+                            "description": "The status of the MOTD set request.",
+                            "type": "string",
+                            "paramOptions": [
+                                {
+                                    "data": "OK",
+                                    "meaning": "The request was successful."
+                                },
+                                {
+                                    "data": "FAIL",
+                                    "meaning": "The request failed."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+
+}
