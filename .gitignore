@@ -3,3 +3,4 @@ _trial*
 dist/
 *.egg-info/
 build/
+.sass-cache

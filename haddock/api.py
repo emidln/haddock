@@ -63,6 +63,8 @@ class API(object):
 
             for api in self.config["api"]:
 
+                apiProcessors = []
+
                 for processor in api["processors"]:
 
                     endpointLoc = "/v%s/%s" % (version, processor["endpoint"])
@@ -76,6 +78,8 @@ class API(object):
 
                     if version in processor["versions"]:
 
+                        apiProcessors.append(processor)
+
                         args = [endpointLoc]
                         kwargs = {"methods": api["allowedMethods"]}
 
@@ -83,15 +87,15 @@ class API(object):
                             self.service, APIFunc, args, kwargs, processor, None)
                         setattr(self.service, newFuncName, route)
 
-                        if showAPIInfo:
-                            apiLocal = copy(api)
-                            del apiLocal["processors"]
-                            apiInfoData.append((apiLocal, processor))
+                if showAPIInfo:
+                    apiLocal = copy(api)
+                    del apiLocal["processors"]
+                    apiInfoData.append((apiLocal, apiProcessors))
 
             if showAPIInfo:
                 args = ["/v%s/apiInfo" % (version,)]
                 kwargs = {"methods": ["GET"]}
-                route = _makeRoute(self.service, apiInfo, args, kwargs, None, [apiInfoData, self.jEnv])
+                route = _makeRoute(self.service, apiInfo, args, kwargs, None, [apiInfoData, self.jEnv, version])
                 setattr(self.service, "apiInfo_v%s" % (version,), route)
 
 

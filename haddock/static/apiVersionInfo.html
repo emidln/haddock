@@ -1,9 +1,62 @@
-{% for apiTop in APIs %}
+<html>
 
-	{% set api = apiTop[0] %}
-	{% set processor = apiTop[1] %}
+	<head>
 
-	{{ api }}
-	{{ processor }}
+		<style type="text/css">
+		{% include "content/pure.min.css" %}
+		</style>
 
-{% endfor %}
+		<style type="text/css">
+			{% include "content/apiInfo.css" %}
+		</style>
+
+
+	</head>
+
+<body>
+
+	<div class="pure-g" id="layout">
+
+		<div class="pure-u-1-5" id="nav">
+
+			<div class="pure-menu pure-menu-open">
+
+				<a class="pure-menu-heading">API Information for v{{ version }}</a>
+
+				<ul>
+					{% for apiTop in APIs %}
+						{% set api = apiTop[0] %}
+						<li><a href="#api_{{api.name}}">{{api.name}}</a></li>
+					{% endfor %}
+
+				</ul>
+
+			</div>
+
+		</div>
+
+		<div class="pure-u-4-5" id="content">
+
+			{% for apiTop in APIs %}
+
+				{% set api = apiTop[0] %}
+				{% set processors = apiTop[1] %}
+
+				<h1 id="api_{{api.name}}">{{api.name}} <small>({{api.friendlyName}})</small></h1>
+				<p>{{api.description}}</p>
+
+				{% for processor in processors %}
+
+					<h2>/v{{version}}/{{processor.endpoint}}</h2>
+
+				{% endfor %}
+
+			{% endfor %}
+
+		</div>
+
+	</div>
+
+</body>
+
+</html>

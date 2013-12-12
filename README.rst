@@ -13,7 +13,7 @@ Because I liked the look of Praekelt's Aludel (https://github.com/praekelt/alude
 How do I use it?
 ----------------
 
-You need two things - the API description document, and the implementation. You can find the description document in `examples` and the example python in the root directory. Simply run `example.py` and navigate to `http://localhost:8094/v2/weather?countryCode=US&postcode=61000&unixTimestamp=1` for a demonstration.
+You need two things - the API description document, and the implementation. You can find the description document in `examples` and the example python in the root directory. Simply run `example.py` and navigate to http://localhost:8094/v1/weather?postcode=61000&unixTimestamp=1 for a demonstration.
 
 To be more exact - Haddock maps methods from *versions* of an API onto Klein-powered routes. You have *API endpoints*, each with one or more *processors*, each of which can map onto one or more *versions*.
 
