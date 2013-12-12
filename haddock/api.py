@@ -8,8 +8,13 @@ from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.internet.defer import maybeDeferred
 
+from jinja2 import Environment, PackageLoader
+
+from copy import copy
+
 import inspect
 import json
+
 
 class _DefaultServiceClass(object):
     """
@@ -44,19 +49,20 @@ class API(object):
 
         showAPIInfo = self.config["metadata"].get("apiInfo", False)
 
+        if showAPIInfo:
+            self.jEnv = Environment(loader=PackageLoader('haddock', 'static'))
+
         for version in self.config["metadata"]["versions"]:
+
+            apiInfoData = []
 
             if hasattr(APIClass, "v%s" % (version,)):
                 APIVersion = getattr(APIClass, "v%s" % (version))(APIClass)
             else:
                 raise Exception("No v%s" % (version,))
 
-            if showAPIInfo:
-                args = ["/v%s/apiInfo" % (version,)]
-                kwargs = {"methods": ["GET"]}
-                route = _makeRoute(self.service, apiInfo, args, kwargs, None, self.config["api"])
-
             for api in self.config["api"]:
+
                 for processor in api["processors"]:
 
                     endpointLoc = "/v%s/%s" % (version, processor["endpoint"])
@@ -76,6 +82,17 @@ class API(object):
                         route = _makeRoute(
                             self.service, APIFunc, args, kwargs, processor, None)
                         setattr(self.service, newFuncName, route)
+
+                        if showAPIInfo:
+                            apiLocal = copy(api)
+                            del apiLocal["processors"]
+                            apiInfoData.append((apiLocal, processor))
+
+            if showAPIInfo:
+                args = ["/v%s/apiInfo" % (version,)]
+                kwargs = {"methods": ["GET"]}
+                route = _makeRoute(self.service, apiInfo, args, kwargs, None, [apiInfoData, self.jEnv])
+                setattr(self.service, "apiInfo_v%s" % (version,), route)
 
 
     def getService(self):

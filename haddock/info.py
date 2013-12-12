@@ -1,5 +1,7 @@
-from jinja2 import Environment, PackageLoader
 
-def apiInfo(self, versionName, APIs):
 
-	return repr([self, versionName, APIs])
+def apiInfo(self, request, args):
+
+	API, env = args
+
+	return env.get_template("apiVersionInfo.html").render(APIs=API)
