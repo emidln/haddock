@@ -1,3 +1,5 @@
+from haddock.info import apiInfo
+
 from klein import Klein
 
 from functools import wraps, update_wrapper
@@ -40,12 +42,19 @@ class API(object):
             self.service = serviceClass
         self.service.app = Klein()
 
+        showAPIInfo = self.config["metadata"].get("apiInfo", False)
+
         for version in self.config["metadata"]["versions"]:
 
             if hasattr(APIClass, "v%s" % (version,)):
                 APIVersion = getattr(APIClass, "v%s" % (version))(APIClass)
             else:
                 raise Exception("No v%s" % (version,))
+
+            if showAPIInfo:
+                args = ["/v%s/apiInfo" % (version,)]
+                kwargs = {"methods": ["GET"]}
+                route = _makeRoute(self.service, apiInfo, args, kwargs, None, self.config["api"])
 
             for api in self.config["api"]:
                 for processor in api["processors"]:
@@ -65,7 +74,7 @@ class API(object):
                         kwargs = {"methods": api["allowedMethods"]}
 
                         route = _makeRoute(
-                            self.service, APIFunc, args, kwargs, processor)
+                            self.service, APIFunc, args, kwargs, processor, None)
                         setattr(self.service, newFuncName, route)
 
 
@@ -108,11 +117,11 @@ class BadResponseParams(APIError):
     code = 500
 
 
-def _makeRoute(serviceClass, method, args, kw, APIInfo):
+def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams):
 
     @wraps(method)
     def wrapper(*args, **kw):
-        return _setup(method, serviceClass, APIInfo, *args, **kw)
+        return _setup(method, serviceClass, APIInfo, args[0], overrideParams, *args, **kw)
 
     update_wrapper(wrapper, method)
     route = serviceClass.app.route(*args, **kw)
@@ -120,36 +129,43 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo):
     return route(wrapper)
 
 
-def _setup(func, self, APIInfo, request, *args, **kw):
+def _setup(func, self, APIInfo, request, overrideParams, *args, **kw):
 
     try:
-        d = _setupWrapper(func, self, APIInfo, request, *args, **kw)
+        d = _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw)
         d.addErrback(_handleAPIError, request)
         return d
     except Exception as exp:
         return _handleAPIError(Failure(), request)
 
 
-def _setupWrapper(func, self, APIInfo, request, *args, **kw):
+def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
 
-    params = None
-    paramsType = APIInfo.get("paramsType", "url")
+    if not overrideParams:
 
-    if paramsType == "url":
-        params = _getParams(request.args, APIInfo)
-    elif paramsType == "jsonbody":
-        requestContent = json.loads(request.content.read())
-        params = _getParams(params, APIInfo)
+        params = None
+        paramsType = APIInfo.get("paramsType", "url")
 
-    d = maybeDeferred(func, self, request, params)
-    d.addErrback(_handleAPIError, request)
+        if paramsType == "url":
+            params = _getParams(request.args, APIInfo)
+        elif paramsType == "jsonbody":
+            requestContent = json.loads(request.content.read())
+            params = _getParams(params, APIInfo)
 
-    if APIInfo.get("returnParams"):
-        d.addCallback(_verifyReturnParams, APIInfo)
+        d = maybeDeferred(func, self, request, params)        
+        d.addErrback(_handleAPIError, request)
 
-    d.addCallback(_formatResponse, request)
+        if APIInfo.get("returnParams"):
+            d.addCallback(_verifyReturnParams, APIInfo)
 
-    return d
+        d.addCallback(_formatResponse, request)
+
+        return d
+
+    else:
+
+        d = maybeDeferred(func, self, request, overrideParams)
+        return d
 
 
 def _verifyReturnParams(result, APIInfo):
