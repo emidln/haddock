@@ -24,12 +24,13 @@
                     "versions": [2],
                     "paramsType": "url",
                     "requiredParams": ["postcode", "countryCode", "unixTimestamp"],
-                    "returnParams": ["temperature", "windSpeed",
+                    "returnParams": ["temperature",
                         {
                             "param": "isRaining",
                             "paramOptions": ["YES", "NO"]
                         }
-                    ]
+                    ],
+                    "optionalReturnParams": ["windSpeed"]
                 }
             ]
         },

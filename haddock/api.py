@@ -229,52 +229,64 @@ def _verifyReturnParams(result, APIInfo):
     return result
 
 
-def _checkReturnParamsDict(result, APIInfo):
+def _normaliseParams(params):
 
-    requiredInput = APIInfo.get("returnParams", set())
+    finishedParams = []
+    paramKeys = []
 
-    requiredKeys = []
-    accountedFor = []
-    required = []
-
-    for req in requiredInput:
-        if isinstance(req, dict):
+    for param in params:
+        if isinstance(param, dict):
             options = []
-            if req.get("paramOptions", None):
-                for option in req.get("paramOptions", None):
+            if param.get("paramOptions", None):
+                for option in param.get("paramOptions", None):
                     if isinstance(option, dict):
                         options.append(option["data"])
                     elif isinstance(option, basestring):
                         options.append(option)
 
-            requiredKeys.append(req["param"])
-            required.append({
-                "param": req["param"],
+            paramKeys.append(param["param"])
+            finishedParams.append({
+                "param": param["param"],
                 "paramOptions": options
             })
-        elif isinstance(req, basestring):
-            requiredKeys.append(req)
-            required.append({
-                "param": req,
+        elif isinstance(param, basestring):
+            paramKeys.append(param)
+            finishedParams.append({
+                "param": param,
             })
 
+    return (finishedParams, set(paramKeys))
+
+def _checkParamOptions(item, data, exp):
+
+    paramOptions = item.get("paramOptions", None)
+
+    if paramOptions and not data in paramOptions:
+        raise exp("%s is not part of %s in %s" % (data, repr(paramOptions), key))
+
+
+def _checkReturnParamsDict(result, APIInfo):
+
+    if result:
+        keys = set(result.keys())
+    else:
+        keys = set()
+
+    requiredInput = APIInfo.get("returnParams", set())
+    optionalInput = APIInfo.get("optionalReturnParams", set())
+
+    required, requiredKeys = _normaliseParams(requiredInput)
+    optional, optionalKeys = _normaliseParams(optionalInput)
+    accountedFor = set()
+
     for key, data in result.iteritems():
-        for req in required:
+        for req in required + optional:
             if req["param"] == key:
-                if req.get("paramOptions", None):
-                    if not data in options:
-                        raise BadResponseParams("%s is not part of %s in %s" % (data, repr(options), key))
+                _checkParamOptions(req, data, BadResponseParams)
+                accountedFor.add(req["param"])
 
-                accountedFor.append(req["param"])
-
-    missing = set(requiredKeys) - set(accountedFor)
-
-    extra = None # FIXME
-
-
-
-
-
+    missing = requiredKeys - accountedFor
+    extra = keys - (requiredKeys | optionalKeys)
 
     if missing:
         raise BadResponseParams("Missing response parameters: '%s'" % (
@@ -291,11 +303,21 @@ def _getParams(params, APIInfo):
     else:
         keys = set()
 
-    required = set(APIInfo.get("requiredParams", set()))
-    optional = set(APIInfo.get("optionalParams", set()))
+    requiredInput = set(APIInfo.get("requiredParams", set()))
+    optionalInput = set(APIInfo.get("optionalParams", set()))
 
-    missing = required - keys
-    extra = keys - (required | optional)
+    required, requiredKeys = _normaliseParams(requiredInput)
+    optional, optionalKeys = _normaliseParams(optionalInput)
+    accountedFor = set()
+
+    for key, data in params.iteritems():
+        for req in required + optional:
+            if req["param"] == key:
+                _checkParamOptions(req, data, BadRequestParams)
+                accountedFor.add(req["param"])
+
+    missing = requiredKeys - accountedFor
+    extra = keys - (requiredKeys | optionalKeys)
 
     if missing:
         raise BadRequestParams("Missing request parameters: '%s'" % (
