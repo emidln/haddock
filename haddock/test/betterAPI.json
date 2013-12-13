@@ -30,7 +30,12 @@
                             "paramOptions": ["YES", "NO"]
                         }
                     ],
-                    "optionalReturnParams": ["windSpeed"]
+                    "optionalReturnParams": [
+                        {
+                            "param": "windSpeed",
+                            "type": "numeric"
+                        }
+                    ]
                 }
             ]
         },

@@ -20,7 +20,7 @@
 
 			{% if item is mapping %}
 
-				<h4>{{item.param}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
+				<h4>{{item.param}}{% if item.type %} <small>{{ item.type }}</small>{% endif %} {% if optional %}<small>optional</small>{% endif %}</h4>
 				{% if item.description %}
 					<p>{{ item.description }}</p>
 				{% else %}
@@ -50,7 +50,7 @@
 
 			{% else %}
 
-				<h4>{{item}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
+				<h4>{{item}} {% if optional %}<small>optional</small>{% endif %}</h4>
 				<p class="no-information">This parameter has no additional information.</p>
 
 			{% endif %}
@@ -90,8 +90,8 @@
 					{% set api = apiTop[0] %}
 					{% set processors = apiTop[1] %}
 
-					<div class="pure-u-1-1 api-title">
-						<h1 id="api_{{api.name}}">{{api.friendlyName}} <small>({{api.name}})</small></h1>
+					<div class="pure-u-1-1 api-title" id="api_{{api.name}}">
+						<h1>{{api.friendlyName}} <small>({{api.name}})</small></h1>
 					</div>
 					<p>{{api.description}}</p>
 
@@ -107,7 +107,11 @@
 						<div class="pure-g processor-split">
 
 							<div class="pure-u-1-2">
+								{% if HTTPType == "GET" %}
 								<h3>Request Arguments</h3>
+								{% elif HTTPType == "POST" %}
+								<h3>POST Arguments</h3>
+								{% endif %}
 								<hr>
 
 								{% if processor.requiredParams %}{{ arguments(processor.requiredParams) }}{% endif %}
