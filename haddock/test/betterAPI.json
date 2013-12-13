@@ -37,7 +37,7 @@
         {
             "name": "motd",
             "friendlyName": "Message Of the Day",
-            "description": "Accessing and setting the Message Of The Day",
+            "description": "Accessing and setting the Message Of The Day.",
             "endpoint": "motd",
             "getProcessors": [
                 {

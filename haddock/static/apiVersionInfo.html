@@ -2,13 +2,10 @@
 
 	<head>
 
-		<style type="text/css">
-		{% include "content/pure.min.css" %}
-		</style>
+		<link rel="stylesheet" href="/content/pure.min.css">
+		<link rel="stylesheet" href="/content/apiInfo.css">
 
-		<style type="text/css">
-			{% include "content/apiInfo.css" %}
-		</style>
+		<title>API Information for v{{ version }}</title>
 
 
 	</head>
@@ -19,42 +16,47 @@
 
 	{% for item in params %}
 
-		{% if item is mapping %}
+		<div class="param-entry">
 
-			<h4>{{item.param}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
-			{% if item.description %}
-				<p>{{ item.description }}</p>
-			{% else %}
-				<p class="no-information">This parameter has no additional information.</p>
-			{% endif %}
+			{% if item is mapping %}
 
-			{% if item.paramOptions %}
-				<p>This parameter is restricted to the following values:</p>
-				<dl>
-					{% for option in item.paramOptions %}
 
-						{% if option is mapping %}
-							<dt>{{option.data}}</dt>
-							{% if option.meaning %}
-								<dd>{{ option.meaning }}</dd>
+				<h4>{{item.param}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
+				{% if item.description %}
+					<p>{{ item.description }}</p>
+				{% else %}
+					<p class="no-information">This parameter has no additional information.</p>
+				{% endif %}
+
+				{% if item.paramOptions %}
+					<h5>This parameter is restricted to the following values:</h5>
+					<dl>
+						{% for option in item.paramOptions %}
+
+							{% if option is mapping %}
+								<dt>{{option.data}}</dt>
+								{% if option.meaning %}
+									<dd>{{ option.meaning }}</dd>
+								{% else %}
+									<dd class="no-information">This option has no description.</dd>
+								{% endif %}
 							{% else %}
-								<dd class="no-information">This option has no additional information.</dd>
+								<dt>{{ option }}</dt>
+								<dd class="no-information">This option has no description.</dd>
 							{% endif %}
-						{% else %}
-							<dt>{{ option }}</dt>
-							<dd class="no-information">This option has no additional information.</dd>
-						{% endif %}
 
-					{% endfor %}
-				</dl>
+						{% endfor %}
+					</dl>
+				{% endif %}
+
+			{% else %}
+
+				<h4>{{item}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
+				<p class="no-information">This parameter has no additional information.</p>
+
 			{% endif %}
 
-		{% else %}
-
-			<h4>{{item}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
-			<p class="no-information">This parameter has no additional information.</p>
-
-		{% endif %}
+		</div>
 
 	{% endfor %}
 
@@ -89,7 +91,9 @@
 					{% set api = apiTop[0] %}
 					{% set processors = apiTop[1] %}
 
-					<h1 id="api_{{api.name}}">{{api.friendlyName}} <small>({{api.name}})</small></h1>
+					<div class="pure-u-1-1 api-title">
+						<h1 id="api_{{api.name}}">{{api.friendlyName}} <small>({{api.name}})</small></h1>
+					</div>
 					<p>{{api.description}}</p>
 
 					{% for processorTmp in processors %}
@@ -97,15 +101,20 @@
 						{% set processor = processorTmp[0] %}
 						{% set HTTPType = processorTmp[1] %}
 
-						<h2>HTTP {{ HTTPType }} /v{{version}}/{{api.endpoint}}</h2>
+						<div class="pure-u-1-1 processor-title">
+							<h2>HTTP {{ HTTPType }} /v{{version}}/{{api.endpoint}}</h2>
+						</div>
 
-						<div class="pure-g">
+						<div class="pure-g processor-split">
 
 							<div class="pure-u-1-2">
 								<h3>Request Arguments</h3>
 
 									{% if processor.requiredParams %}{{ arguments(processor.requiredParams) }}{% endif %}
 									{% if processor.optionalParams %}{{ arguments(processor.optionalParams, optional=True) }}{% endif %}
+									{% if not processor.requiredParams and not processor.optionalParams %}
+										<p class="no-information">This API call does not specify any request params.</p>
+									{% endif %}
 							</div>
 
 							<div class="pure-u-1-2">
@@ -113,6 +122,9 @@
 
 									{% if processor.returnParams %}{{ arguments(processor.returnParams) }}{% endif %}
 									{% if processor.optionalReturnParams %}{{ arguments(processor.optionalReturnParams, optional=True) }}{% endif %}
+									{% if not processor.returnParams and not processor.optionalReturnParams %}
+										<p class="no-information">This API call does not specify any response params.</p>
+									{% endif %}
 
 							</div>
 

@@ -1,13 +1,18 @@
 from twisted.trial import unittest
 
+from klein import Klein
+from twisted.web.static import File
+
 import haddock.test.requestMock as rm
 
+import haddock
 import haddock.api
 import inspect
 import exceptions
 import json
 import time
 import os
+
 
 
 class HaddockDefaultServiceClassTests(unittest.TestCase):
@@ -79,6 +84,13 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
 
 
 class ExampleServiceClass(object):
+
+    app = Klein()
+
+    @app.route("/content", branch=True)
+    def _staticFile(self, request):
+
+        return File(os.path.join(haddock.basePath, "static", "content"))
 
     def __init__(self):
 

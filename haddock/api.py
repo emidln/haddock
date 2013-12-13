@@ -5,6 +5,7 @@ from functools import wraps, update_wrapper
 from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.internet.defer import maybeDeferred
+from twisted.web.static import File
 
 from jinja2 import Environment, PackageLoader
 
@@ -20,6 +21,13 @@ class _DefaultServiceClass(object):
 
     @ivar app: A L{Klein} app.
     """
+    app = Klein()
+
+    @app.route("/content", branch=True)
+    def _staticFile(self, request):
+
+        return File(os.path.join(os.path.abspath(
+            os.path.dirname(__file__)), "static", "content"))
 
 
 class API(object):
@@ -43,7 +51,9 @@ class API(object):
             self.service = _DefaultServiceClass()
         else:
             self.service = serviceClass
-        self.service.app = Klein()
+
+        if not hasattr(self.service, "app"):
+            self.service.app = Klein()
 
         showAPIInfo = self.config["metadata"].get("apiInfo", False)
 
