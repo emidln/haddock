@@ -74,7 +74,15 @@
 						{% set api = apiTop[0] %}
 						<li><a href="#api_{{api.name}}">{{api.friendlyName}}</a></li>
 					{% endfor %}
+					<li class="pure-menu-heading">API Versions</li>
+					{% for ver in metadata.versions %}
+						{% if ver == version %}
+							<li><a href="#">v{{ver}} <small>(Current)</small></a></li>
+						{% else %}
+							<li><a href="/v{{ver}}/apiInfo">v{{ver}}</a></li>
+						{% endif %}
 
+					{% endfor %}
 				</ul>
 
 			</div>

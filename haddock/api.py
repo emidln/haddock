@@ -70,14 +70,15 @@ class API(object):
                 raise Exception("No v%s" % (version,))
 
             for api in self.config["api"]:
-
                 apiProcessors = []
 
                 for processor in api.get("getProcessors", []):
-                    _createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "GET")
+                    _createRoute(self.service, version, processor, api,
+                        APIVersion, apiProcessors, "GET")
 
                 for processor in api.get("postProcessors", []):
-                    _createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "POST")
+                    _createRoute(self.service, version, processor, api,
+                        APIVersion, apiProcessors, "POST")
 
                 if showAPIInfo:
                     apiLocal = copy(api)
@@ -90,7 +91,8 @@ class API(object):
                 kwargs = {"methods": ["GET"]}
                 apiInfo = copy(_apiInfo)
                 apiInfo.__name__ = "v%s_apiInfo" % (version,)
-                route = _makeRoute(self.service, apiInfo, args, kwargs, None, [apiInfoData, self.jEnv, version])
+                route = _makeRoute(self.service, apiInfo, args, kwargs, None,
+                    [apiInfoData, self.jEnv, version, self.config["metadata"]])
                 setattr(self.service, "apiInfo_v%s" % (version,), route)
 
 
@@ -115,7 +117,8 @@ class API(object):
         return self.service.app
 
 
-def _createRoute(service, version, processor, api, APIVersion, apiProcessors, HTTPType):
+def _createRoute(service, version, processor, api, APIVersion, apiProcessors,
+                 HTTPType):
 
     endpointLoc = "/v%s/%s" % (version, api["endpoint"])
     newFuncName = str("api_v%s_%s_%s" % (version, api["name"], HTTPType))
@@ -159,7 +162,8 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams):
 
     @wraps(method)
     def wrapper(*args, **kw):
-        return _setup(method, serviceClass, APIInfo, args[0], overrideParams, *args, **kw)
+        return _setup(
+            method, serviceClass, APIInfo, args[0], overrideParams, *args, **kw)
 
     update_wrapper(wrapper, method)
     route = serviceClass.app.route(*args, **kw)
@@ -170,7 +174,8 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams):
 def _setup(func, self, APIInfo, request, overrideParams, *args, **kw):
 
     try:
-        d = _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw)
+        d = _setupWrapper(
+            func, self, APIInfo, request, overrideParams, *args, **kw)
         d.addErrback(_handleAPIError, request)
         return d
     except Exception as exp:
@@ -272,7 +277,7 @@ def _checkParamOptions(item, data, exp):
     paramOptions = item.get("paramOptions", None)
 
     if paramOptions and not data in paramOptions:
-        raise exp("%s is not part of %s in %s" % (data, repr(paramOptions), key))
+        raise exp("%s isn't part of %s in %s" % (data, repr(paramOptions), key))
 
 
 def _checkReturnParamsDict(result, APIInfo):
@@ -394,6 +399,7 @@ def _formatResponse(result, request):
 
 def _apiInfo(self, request, args):
 
-    API, env, version = args
+    API, env, version, metadata = args
 
-    return env.get_template("apiVersionInfo.html").render(APIs=API, version=version)
+    return env.get_template("apiVersionInfo.html").render(APIs=API,
+        version=version, metadata=metadata)
