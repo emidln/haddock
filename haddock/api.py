@@ -65,31 +65,16 @@ class API(object):
 
                 apiProcessors = []
 
-                for processor in api["processors"]:
+                for processor in api.get("getProcessors", []):
+                    createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "GET")
 
-                    endpointLoc = "/v%s/%s" % (version, processor["endpoint"])
-                    newFuncName = str("api_v%s_%s" % (version, api["name"]))
-
-                    if hasattr(APIVersion, "api_%s" % (api["name"],)):
-                        APIFunc = getattr(APIVersion, "api_%s" % (api["name"],))
-                        APIFunc.__name__ = newFuncName
-                    else:
-                        raise Exception("no %s in v%s" % (api["name"], version))
-
-                    if version in processor["versions"]:
-
-                        apiProcessors.append(processor)
-
-                        args = [endpointLoc]
-                        kwargs = {"methods": api["allowedMethods"]}
-
-                        route = _makeRoute(
-                            self.service, APIFunc, args, kwargs, processor, None)
-                        setattr(self.service, newFuncName, route)
+                for processor in api.get("postProcessors", []):
+                    createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "POST")
 
                 if showAPIInfo:
                     apiLocal = copy(api)
-                    del apiLocal["processors"]
+                    apiLocal.pop("getProcessors", None)
+                    apiLocal.pop("postProcessors", None)
                     apiInfoData.append((apiLocal, apiProcessors))
 
             if showAPIInfo:
@@ -119,6 +104,28 @@ class API(object):
         """
         return self.service.app
 
+
+def createRoute(service, version, processor, api, APIVersion, apiProcessors, HTTPType):
+
+    endpointLoc = "/v%s/%s" % (version, api["endpoint"])
+    newFuncName = str("api_v%s_%s_%s" % (version, api["name"], HTTPType))
+
+    if hasattr(APIVersion, "%s_%s" % (api["name"], HTTPType)):
+        APIFunc = getattr(APIVersion, "%s_%s" % (api["name"], HTTPType))
+        APIFunc.__name__ = newFuncName
+    else:
+        raise Exception("no %s_%s in v%s" % (api["name"], HTTPType, version))
+
+    if version in processor["versions"]:
+
+        apiProcessors.append(processor)
+
+        args = [endpointLoc]
+        kwargs = {"methods": [HTTPType]}
+
+        route = _makeRoute(
+            service, APIFunc, args, kwargs, processor, None)
+        setattr(service, newFuncName, route)
 
 
 # The code below is partially based on the equiv in Praekelt's Aludel
@@ -178,6 +185,7 @@ def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
 
         if APIInfo.get("returnParams"):
             d.addCallback(_verifyReturnParams, APIInfo)
+            d.addErrback(_handleAPIError, request)
 
         d.addCallback(_formatResponse, request)
 
@@ -200,7 +208,7 @@ def _verifyReturnParams(result, APIInfo):
         else:
             keys = set(result.keys())
 
-        if not isinstance(items, dict):
+        if not isinstance(result, dict):
             raise BadResponseParams("Result did not match the return format.")
 
         _checkReturnParamsDict(result, APIInfo)
@@ -223,12 +231,50 @@ def _verifyReturnParams(result, APIInfo):
 
 def _checkReturnParamsDict(result, APIInfo):
 
-    keys = set(result.keys())
-    required = set(APIInfo.get("returnParams", set()))
-    optional = set(APIInfo.get("optionalReturnParams", set()))
+    requiredInput = APIInfo.get("returnParams", set())
 
-    missing = required - keys
-    extra = keys - (required | optional)
+    requiredKeys = []
+    accountedFor = []
+    required = []
+
+    for req in requiredInput:
+        if isinstance(req, dict):
+            options = []
+            if req.get("paramOptions", None):
+                for option in req.get("paramOptions", None):
+                    if isinstance(option, dict):
+                        options.append(option["data"])
+                    elif isinstance(option, basestring):
+                        options.append(option)
+
+            requiredKeys.append(req["param"])
+            required.append({
+                "param": req["param"],
+                "paramOptions": options
+            })
+        elif isinstance(req, basestring):
+            requiredKeys.append(req)
+            required.append({
+                "param": req,
+            })
+
+    for key, data in result.iteritems():
+        for req in required:
+            if req["param"] == key:
+                if req.get("paramOptions", None):
+                    if not data in options:
+                        raise BadResponseParams("%s is not part of %s in %s" % (data, repr(options), key))
+
+                accountedFor.append(req["param"])
+
+    missing = set(requiredKeys) - set(accountedFor)
+
+    extra = None # FIXME
+
+
+
+
+
 
     if missing:
         raise BadResponseParams("Missing response parameters: '%s'" % (

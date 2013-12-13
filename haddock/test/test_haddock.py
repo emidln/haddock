@@ -6,6 +6,7 @@ import haddock.api
 import inspect
 import exceptions
 import json
+import time
 import os
 
 
@@ -15,7 +16,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
     """
     def setUp(self):
         path = os.path.join(os.path.abspath(
-            os.path.dirname(__file__)), 'exampleAPI.json')
+            os.path.dirname(__file__)), 'betterAPI.json')
         config = json.load(open(path))
 
         self.api = haddock.api.API(APIExample, config)
@@ -29,10 +30,12 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
         for item in res:
             functions.append(item[0])
 
-        self.assertIn("api_v1_getMail", functions)
-        self.assertIn("api_v2_getMail", functions)
-        self.assertIn("api_v1_getWeather", functions)
-        self.assertIn("api_v2_getWeather", functions)
+        self.assertIn("api_v1_weather_GET", functions)
+        self.assertIn("api_v2_weather_GET", functions)
+        self.assertIn("api_v1_motd_GET", functions)
+        self.assertIn("api_v2_motd_GET", functions)
+        self.assertIn("api_v1_motd_POST", functions)
+        self.assertIn("api_v2_motd_POST", functions)
 
 
     def test_blankServiceClass(self):
@@ -43,7 +46,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             self.assertIsInstance(error.value, AttributeError)
             self.assertIsNone(result)
 
-        return rm.testItem(self.api.service.api_v1_getWeather, "/v1/weather",
+        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
@@ -55,7 +58,7 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
     """
     def setUp(self):
         path = os.path.join(os.path.abspath(
-            os.path.dirname(__file__)), 'exampleAPI.json')
+            os.path.dirname(__file__)), 'betterAPI.json')
         config = json.load(open(path))
 
         self.api = haddock.api.API(APIExample, config,
@@ -70,12 +73,20 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.service.api_v1_getWeather, "/v1/weather",
+        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
 
 class ExampleServiceClass(object):
+
+    def __init__(self):
+
+        self.motd = {
+            "message": "NO MOTD SET",
+            "setBy": "nobody",
+            "setWhen": 0
+        }
 
     def doSomething(self):
         return {"temperature": 30, "windSpeed": 20, "isRaining": False}
@@ -90,28 +101,38 @@ class APIExample(object):
             pass
 
         @staticmethod
-        def api_getWeather(config, request, params):
+        def weather_GET(service, request, params):
 
-            return config.doSomething()
+            return service.doSomething()
 
         @staticmethod
-        def api_getMail(config, request, params):
+        def motd_GET(service, request, params):
 
-            return [{
-                "from": "you",
-                "to": "me",
-                "subject": "hello",
-                "sentTimestamp": 1386679094.0,
-                "content": "hi there!"
-            }]
+            return service.motd
+
+        @staticmethod
+        def motd_POST(service, request, params):
+
+            service.motd = {
+                "message": params["message"],
+                "setBy": params["username"],
+                "setWhen": time.time()
+            }
+
+            return {"status": "OK"}
 
     class v2(object):
 
         def __init__(self, outer):
 
-            self.api_getMail = outer.v1.api_getMail
+            self.motd_GET = outer.v1.motd_GET
 
         @staticmethod
-        def api_getWeather(config, request, params):
+        def weather_GET(service, request, params):
 
-            return {"temperature": 30, "windSpeed": 20, "isRaining": False}
+            return {"temperature": 30, "windSpeed": 20, "isRaining": "YES"}
+
+        @staticmethod
+        def motd_POST(service, request, params):
+
+            return {"status": "BRILLIANT"}
