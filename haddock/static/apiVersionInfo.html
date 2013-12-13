@@ -113,18 +113,18 @@
 								{% if processor.requiredParams %}{{ arguments(processor.requiredParams) }}{% endif %}
 								{% if processor.optionalParams %}{{ arguments(processor.optionalParams, optional=True) }}{% endif %}
 								{% if not processor.requiredParams and not processor.optionalParams %}
-									<p class="no-information">This API call does not specify any request params.</p>
+									<p>This API call does not specify any request params.</p>
 								{% endif %}
 							</div>
 
 							<div class="pure-u-1-2">
-								<h3>Return Arguments</h3>
+								<h3>Response Arguments</h3>
 								<hr>
 
 								{% if processor.returnParams %}{{ arguments(processor.returnParams) }}{% endif %}
 								{% if processor.optionalReturnParams %}{{ arguments(processor.optionalReturnParams, optional=True) }}{% endif %}
 								{% if not processor.returnParams and not processor.optionalReturnParams %}
-									<p class="no-information">This API call does not specify any response params.</p>
+									<p>This API call does not specify any response params.</p>
 								{% endif %}
 
 							</div>
