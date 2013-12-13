@@ -1,5 +1,3 @@
-from haddock.info import apiInfo
-
 from klein import Klein
 
 from functools import wraps, update_wrapper
@@ -66,10 +64,10 @@ class API(object):
                 apiProcessors = []
 
                 for processor in api.get("getProcessors", []):
-                    createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "GET")
+                    _createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "GET")
 
                 for processor in api.get("postProcessors", []):
-                    createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "POST")
+                    _createRoute(self.service, version, processor, api, APIVersion, apiProcessors, "POST")
 
                 if showAPIInfo:
                     apiLocal = copy(api)
@@ -80,6 +78,8 @@ class API(object):
             if showAPIInfo:
                 args = ["/v%s/apiInfo" % (version,)]
                 kwargs = {"methods": ["GET"]}
+                apiInfo = copy(_apiInfo)
+                apiInfo.__name__ = "v%s_apiInfo" % (version,)
                 route = _makeRoute(self.service, apiInfo, args, kwargs, None, [apiInfoData, self.jEnv, version])
                 setattr(self.service, "apiInfo_v%s" % (version,), route)
 
@@ -105,7 +105,7 @@ class API(object):
         return self.service.app
 
 
-def createRoute(service, version, processor, api, APIVersion, apiProcessors, HTTPType):
+def _createRoute(service, version, processor, api, APIVersion, apiProcessors, HTTPType):
 
     endpointLoc = "/v%s/%s" % (version, api["endpoint"])
     newFuncName = str("api_v%s_%s_%s" % (version, api["name"], HTTPType))
@@ -118,7 +118,7 @@ def createRoute(service, version, processor, api, APIVersion, apiProcessors, HTT
 
     if version in processor["versions"]:
 
-        apiProcessors.append(processor)
+        apiProcessors.append((processor, HTTPType))
 
         args = [endpointLoc]
         kwargs = {"methods": [HTTPType]}
@@ -380,3 +380,10 @@ def _formatResponse(result, request):
     }
 
     return json.dumps(response)
+
+
+def _apiInfo(self, request, args):
+
+    API, env, version = args
+
+    return env.get_template("apiVersionInfo.html").render(APIs=API, version=version)

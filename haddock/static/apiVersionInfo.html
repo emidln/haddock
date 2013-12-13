@@ -15,7 +15,53 @@
 
 <body>
 
-	<div class="pure-g" id="layout">
+{% macro arguments(params, optional=False) -%}
+
+	{% for item in params %}
+
+		{% if item is mapping %}
+
+			<h4>{{item.param}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
+			{% if item.description %}
+				<p>{{ item.description }}</p>
+			{% else %}
+				<p class="no-information">This parameter has no additional information.</p>
+			{% endif %}
+
+			{% if item.paramOptions %}
+				<p>This parameter is restricted to the following values:</p>
+				<dl>
+					{% for option in item.paramOptions %}
+
+						{% if option is mapping %}
+							<dt>{{option.data}}</dt>
+							{% if option.meaning %}
+								<dd>{{ option.meaning }}</dd>
+							{% else %}
+								<dd class="no-information">This option has no additional information.</dd>
+							{% endif %}
+						{% else %}
+							<dt>{{ option }}</dt>
+							<dd class="no-information">This option has no additional information.</dd>
+						{% endif %}
+
+					{% endfor %}
+				</dl>
+			{% endif %}
+
+		{% else %}
+
+			<h4>{{item}} {% if optional %}<small>(Optional)</small>{% endif %}</h4>
+			<p class="no-information">This parameter has no additional information.</p>
+
+		{% endif %}
+
+	{% endfor %}
+
+
+{%- endmacro %}
+
+	<div class="pure-g-r" id="layout">
 
 		<div class="pure-u-1-5" id="nav">
 
@@ -43,12 +89,34 @@
 					{% set api = apiTop[0] %}
 					{% set processors = apiTop[1] %}
 
-					<h1 id="api_{{api.name}}">{{api.name}} <small>({{api.friendlyName}})</small></h1>
+					<h1 id="api_{{api.name}}">{{api.friendlyName}} <small>({{api.name}})</small></h1>
 					<p>{{api.description}}</p>
 
-					{% for processor in processors %}
+					{% for processorTmp in processors %}
 
-						<h2>/v{{version}}/{{processor.endpoint}}</h2>
+						{% set processor = processorTmp[0] %}
+						{% set HTTPType = processorTmp[1] %}
+
+						<h2>HTTP {{ HTTPType }} /v{{version}}/{{api.endpoint}}</h2>
+
+						<div class="pure-g">
+
+							<div class="pure-u-1-2">
+								<h3>Request Arguments</h3>
+
+									{% if processor.requiredParams %}{{ arguments(processor.requiredParams) }}{% endif %}
+									{% if processor.optionalParams %}{{ arguments(processor.optionalParams, optional=True) }}{% endif %}
+							</div>
+
+							<div class="pure-u-1-2">
+								<h3>Return Arguments</h3>
+
+									{% if processor.returnParams %}{{ arguments(processor.returnParams) }}{% endif %}
+									{% if processor.optionalReturnParams %}{{ arguments(processor.optionalReturnParams, optional=True) }}{% endif %}
+
+							</div>
+
+						</div>
 
 					{% endfor %}
 
