@@ -24,7 +24,7 @@
 				{% if item.description %}
 					<p>{{ item.description }}</p>
 				{% else %}
-					<p class="no-information">This parameter has no additional information.</p>
+					
 				{% endif %}
 
 				{% if item.paramOptions %}
@@ -37,11 +37,11 @@
 								{% if option.meaning %}
 									<dd>{{ option.meaning }}</dd>
 								{% else %}
-									<dd class="no-information">This option has no description.</dd>
+									<dd class="no-information">&nbsp;</dd>
 								{% endif %}
 							{% else %}
 								<dt>{{ option }}</dt>
-								<dd class="no-information">This option has no description.</dd>
+								<dd class="no-information">&nbsp;</dd>
 							{% endif %}
 
 						{% endfor %}
@@ -51,7 +51,6 @@
 			{% else %}
 
 				<h4>{{item}} {% if optional %}<small>optional</small>{% endif %}</h4>
-				<p class="no-information">This parameter has no additional information.</p>
 
 			{% endif %}
 
