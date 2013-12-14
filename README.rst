@@ -15,9 +15,9 @@ How do I use it?
 
 You need two things - the API description document, and the implementation.
 
-You can find the example description document in `haddock/test` and the example Python in the root directory. Simply run `example.py` and navigate to http://localhost:8094/v1/weather?postcode=61000&unixTimestamp=1 for a demonstration.
+You can find the example description document and the example Python in the root directory. Simply run `example.py` and navigate to http://localhost:8094/v1/weather?postcode=61000&unixTimestamp=1 for a demonstration.
 
 More Detail
 -----------
 
-Check `docs/APIDescription.md` for more information on the API Description.
+Check `docs/APIDescription.md` for more information on the API Description. A more complete API example can be seen in `haddock/test/betterAPI.json`.

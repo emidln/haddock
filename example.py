@@ -6,11 +6,9 @@ from haddock.api import API, DefaultServiceClass
 import json
 
 class myServiceClass(DefaultServiceClass):
-
     def __init__(self):
         # Store things in your service class that you want to access in your
         # API's methods.
-
         self.motd = {
             "message": "NO MOTD SET",
             "setBy": "nobody",
@@ -48,8 +46,8 @@ class APIExample(object):
 myAPI = API(
     APIExample, # Pass in your API class.
     json.load(open("APIExample.json")), # Load your API definition and pass it in.
-    serviceClass=myServiceClass()) # Rather than using the default, use your
-                                   # custom service class.
+    serviceClass=myServiceClass()) # Rather than using the default, pass in an
+                                   # instance to your custom service class.
 
 service = myAPI.getApp() # Get a reference to the Klein backbone.
 service.run("127.0.0.1", 8094) # Start up a HTTP server!
