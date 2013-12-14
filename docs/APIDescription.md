@@ -14,6 +14,7 @@ The API Description Language ends up having two parts - the `metadata` and the `
 }
 ~~~~
 
+
 Metadata
 --------
 
@@ -22,6 +23,8 @@ The `metadata` contains three things:
 - `name`: The computer-friendly name.
 - `friendlyName`: The user-friendly name.
 - `versions`: A list of applicable versions. They don't have to be 1, 2, or whatever - they're just used later on in `api`.
+- `apiInfo`: Whether or not you want automatic API documentation generated.
+
 
 API
 ---
@@ -31,61 +34,49 @@ The `api` contains a list of dicts, which are API endpoints. In each API method 
 - `name`: The computer-friendly name. This is used in naming your functions later!
 - `friendlyName`: The user-friendly name.
 - `description`: The user-friendly description.
-- `allowedMethods`: What HTTP methods are allowed as a part of this endpoint. I'd recommend making different endpoints for `GET`, `PUT`, etc.
-- `processors`: A list of dicts, which will be entered into below.
+- `endpoint`: The URL endpoint. For example, it will make a processor for v1 be under "/v1/weather".
+- `getProcessors` (optional): A list of processors (see below). These processors respond to a HTTP GET.
+- `postProcessors` (optional): A list of processors (see below). These processors respond to a HTTP POST.
+
 
 Processors
 ----------
 
-Processors are the backbone of your API - they are the things behind the endpoints. They contain the following fields in the dict:
+Processors are the bits of your API that do things. They are made up of dicts, and contain the following fields:
 
 - `versions`: A list of versions (see `metadata`) which this endpoint applies to.
-- `endpoint`: The HTTP endpoint where it will sit. This is after the version parameter in the URI - so putting in "weather" on v1 will end up with `/v1/weather`.
 - `paramsType` (optional): Where the params will be - either `url` (in `request.args`) or `jsonbody` (for example, the body of a HTTP POST). Defaults to `url`.
-- `optionalParams` (optional): JSON keys that the API consumer can give, if they want to.
-- `requiredParams` (optional): JSON keys that the API consumer *has* to give.
-- `returnParams` (optional): dict keys that your API *has* to return.
-- `optionalReturnParams` (optional): dict keys that your API may return.
+- `returnFormat` (optional): 
+- `requiredParams` (optional): Parameters that the API consumer *has* to give. This is a list, the contents of which are explained below.
+- `optionalParams` (optional): Parameters that the API consumer can give, if they want to. This is a list, the contents of which are explained below.
+- `returnParams` (optional): Parameters that your API *has* to return. This is a list, the contents of which are explained below.
+- `optionalReturnParams` (optional): Parameters that your API may return. This is a list, the contents of which are explained below.
 
 Please note that if you have set `requiredParams`, you MUST set every other key that may be given in `optionalParams`! Same goes with `returnParams`.
 
 
-All Together
-------------
+Parameters
+----------
 
-All together, you get something like this...
+When defining the parameters your API can give/take, you can do it two ways. The first way is just giving a string containing the param key, the second is giving it a more detailed `dict`. The dict fields are below.
 
-~~~~{json}
-{
-    "metadata": {
-        "name": "APIExample",
-        "friendlyName": "HawkOwl's API Example",
-        "versions": [1, 2]
-    },
-    "api": [
-        {
-            "name": "getWeather",
-            "friendlyName": "Get Weather",
-            "description": "Gets the weather.",
-            "allowedMethods": ["GET"],
-            "processors": [
-                {   
-                    "versions": [1],
-                    "endpoint": "weather",
-                    "paramsType": "url",
-                    "optionalParams": ["countryCode"],
-                    "requiredParams": ["postcode", "unixTimestamp"]
-                },
-                {
-                    "versions": [2],
-                    "endpoint": "weather",
-                    "paramsType": "url",
-                    "requiredParams": ["postcode", "countryCode", "unixTimestamp"],
-                    "returnParams": ["temperature", "windSpeed", "isRaining"]
-                }
-            ]
-        }
-    ]
-}
+- `param`: The parameter key.
+- `description` (optional): The user-friendly description of what this parameter is for. This is shown in the API documentation.
+- `type` (optional): A type that can be displayed in the API documentation. This isn't enforced.
+- `example` (optional): An example value, for the API documentation.
+- `paramOptions` (optional): If this parameter can only accept a certain number of values, use this to restrict it to them automatically. It's a list, containing either a string of an acceptable value, or a `dict` (details below). These are also shown in the API documentation.
 
-~~~~
+
+Parameter Options
+-----------------
+
+If you want to document your parameter options a bit better than simply giving it values, you can do so by making `paramOptions` a list of `dict`s with the following values:
+
+- `data`: The acceptable value.
+- `meaning`: The meaning of this value. Used in the API documentation.
+
+
+Example
+-------
+
+For a proper example, see `betterAPI.json` under `haddock/test/`.
