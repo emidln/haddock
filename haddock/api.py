@@ -14,9 +14,10 @@ from copy import copy
 
 import inspect
 import json
+import os
 
 
-class _DefaultServiceClass(object):
+class DefaultServiceClass(object):
     """
     Service object!
 
@@ -49,7 +50,7 @@ class API(object):
         """
         self.config = config
         if not serviceClass:
-            self.service = _DefaultServiceClass()
+            self.service = DefaultServiceClass()
         else:
             self.service = serviceClass
 
