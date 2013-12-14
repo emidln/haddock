@@ -47,7 +47,7 @@ myAPI = API(
     APIExample, # Pass in your API class.
     json.load(open("APIExample.json")), # Load your API definition and pass it in.
     serviceClass=myServiceClass()) # Rather than using the default, pass in an
-                                   # instance to your custom service class.
+                                   # instance of your custom service class.
 
 service = myAPI.getApp() # Get a reference to the Klein backbone.
 service.run("127.0.0.1", 8094) # Start up a HTTP server!
