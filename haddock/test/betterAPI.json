@@ -33,6 +33,7 @@
                     "optionalReturnParams": [
                         {
                             "param": "windSpeed",
+                            "description": "Wind speed, in km/h.",
                             "type": "numeric"
                         }
                     ]
