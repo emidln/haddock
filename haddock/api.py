@@ -3,6 +3,7 @@ from klein import Klein
 from functools import wraps, update_wrapper
 
 from twisted.python import log
+from twisted.web.http import Request
 from twisted.python.failure import Failure
 from twisted.internet.defer import maybeDeferred
 from twisted.web.static import File
@@ -73,11 +74,11 @@ class API(object):
                 apiProcessors = []
 
                 for processor in api.get("getProcessors", []):
-                    _createRoute(self.service, version, processor, api,
+                    _createRoutes(self.service, version, api, processor,
                         APIVersion, apiProcessors, "GET")
 
                 for processor in api.get("postProcessors", []):
-                    _createRoute(self.service, version, processor, api,
+                    _createRoutes(self.service, version, api, processor,
                         APIVersion, apiProcessors, "POST")
 
                 if showAPIInfo:
@@ -117,27 +118,40 @@ class API(object):
         return self.service.app
 
 
-def _createRoute(service, version, processor, api, APIVersion, apiProcessors,
-                 HTTPType):
+def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
+                  apiProcessors, HTTPType):
+    """
+    Creates the routes and puts them in the service.
 
-    endpointLoc = "/v%s/%s" % (version, api["endpoint"])
-    newFuncName = str("api_v%s_%s_%s" % (version, api["name"], HTTPType))
+    @param service: The service class to put the routes in.
+    @param version: The version that we are taking the API methods from.
+    @param API: The API we are currently working on, from the API configuration.
+    @param APIProcessor: The processor we are currently working on from the API
+    configuration.
+    @param sourceClassVersion: The source class version we're currently working
+    from.
+    @param apiProcessors: For L{_apiInfo}.
+    @param HTTPType: The HTTP type we are currently working with.
+    """
 
-    if hasattr(APIVersion, "%s_%s" % (api["name"], HTTPType)):
-        APIFunc = getattr(APIVersion, "%s_%s" % (api["name"], HTTPType))
+    endpointLoc = "/v%s/%s" % (version, API["endpoint"])
+    newFuncName = str("api_v%s_%s_%s" % (version, API["name"], HTTPType))
+
+    if hasattr(sourceClassVersion, "%s_%s" % (API["name"], HTTPType)):
+        APIFunc = getattr(sourceClassVersion, "%s_%s" % (API["name"], HTTPType))
         APIFunc.__name__ = newFuncName
     else:
-        raise Exception("no %s_%s in v%s" % (api["name"], HTTPType, version))
+        raise Exception("no %s_%s in v%s" % (API["name"], HTTPType, version))
 
-    if version in processor["versions"]:
+    if version in APIProcessor["versions"]:
 
-        apiProcessors.append((processor, HTTPType))
+        apiProcessors.append((APIProcessor, HTTPType))
 
         args = [endpointLoc]
         kwargs = {"methods": [HTTPType]}
 
         route = _makeRoute(
-            service, APIFunc, args, kwargs, processor, None)
+            service, APIFunc, args, kwargs, APIProcessor, None)
         setattr(service, newFuncName, route)
 
 
@@ -162,8 +176,12 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams):
 
     @wraps(method)
     def wrapper(*args, **kw):
+        req = None
+        for item in args:
+            if isinstance(item, Request):
+                req = item
         return _setup(
-            method, serviceClass, APIInfo, args[0], overrideParams, *args, **kw)
+            method, serviceClass, APIInfo, req, overrideParams, *args, **kw)
 
     update_wrapper(wrapper, method)
     route = serviceClass.app.route(*args, **kw)
@@ -179,7 +197,7 @@ def _setup(func, self, APIInfo, request, overrideParams, *args, **kw):
         d.addErrback(_handleAPIError, request)
         return d
     except Exception as exp:
-        return _handleAPIError(Failure(), request)
+        return _handleAPIError(Failure(exp), request)
 
 
 def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
