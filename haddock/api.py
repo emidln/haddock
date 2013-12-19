@@ -14,7 +14,7 @@ from copy import copy
 
 import inspect
 import json
-import os
+import os, sys, traceback
 
 
 class DefaultServiceClass(object):
@@ -337,8 +337,8 @@ def _getParams(params, APIInfo):
     else:
         keys = set()
 
-    requiredInput = set(APIInfo.get("requiredParams", set()))
-    optionalInput = set(APIInfo.get("optionalParams", set()))
+    requiredInput = APIInfo.get("requiredParams", set())
+    optionalInput = APIInfo.get("optionalParams", set())
 
     required, requiredKeys = _normaliseParams(requiredInput)
     optional, optionalKeys = _normaliseParams(optionalInput)
@@ -373,12 +373,12 @@ def _handleAPIError(failure, request):
     errorcode = 500
 
     if not isinstance(error, BadRequestParams):
-        log.err(failure)
+        traceback.print_exc(file=sys.stdout)
+        log.err(error)
     if hasattr(error, "code"):
         errorcode = error.code
 
     request.setHeader('Content-Type', 'application/json')
-
     request.setResponseCode(errorcode)
 
     if errorcode == 500:

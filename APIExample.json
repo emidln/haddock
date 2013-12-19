@@ -18,7 +18,12 @@
                     "versions": [1],
                     "paramsType": "url",
                     "optionalParams": ["countryCode"],
-                    "requiredParams": ["postcode", "unixTimestamp"]
+                    "requiredParams": [
+                        {
+                            "param": "postcode"
+                        },
+                        "unixTimestamp"
+                    ]
                 },
                 {
                     "versions": [2],
