@@ -14,7 +14,11 @@ setup(
     url='https://github.com/hawkowl/haddock',
     packages=find_packages(),
     package_data={
-        'haddock': ['test/*.json']
+        'haddock': [
+            'test/*.json',
+            'static/*.html',
+            'static/content/*.css'
+        ]
         },
     scripts=[
         ],
