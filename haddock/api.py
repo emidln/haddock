@@ -209,7 +209,11 @@ def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
         paramsType = APIInfo.get("paramsType", "url")
 
         if paramsType == "url":
-            params = _getParams(request.args, APIInfo)
+            args = request.args
+            params = {}
+            for key, data in args.iteritems():
+                params[key] = data[0]
+            params = _getParams(params, APIInfo)
         elif paramsType == "jsonbody":
             requestContent = json.loads(request.content.read())
             params = _getParams(params, APIInfo)
@@ -373,7 +377,6 @@ def _handleAPIError(failure, request):
     errorcode = 500
 
     if not isinstance(error, BadRequestParams):
-        traceback.print_exc(file=sys.stdout)
         log.err(error)
     if hasattr(error, "code"):
         errorcode = error.code
