@@ -76,11 +76,11 @@ class API(object):
 
                 for processor in api.get("getProcessors", []):
                     _createRoutes(self.service, version, api, processor,
-                        APIVersion, apiProcessors, "GET")
+                        APIVersion, apiProcessors, "GET", self.config)
 
                 for processor in api.get("postProcessors", []):
                     _createRoutes(self.service, version, api, processor,
-                        APIVersion, apiProcessors, "POST")
+                        APIVersion, apiProcessors, "POST", self.config)
 
                 if showAPIInfo:
                     apiLocal = copy(api)
@@ -94,7 +94,8 @@ class API(object):
                 apiInfo = copy(_apiInfo)
                 apiInfo.__name__ = "v%s_apiInfo" % (version,)
                 route = _makeRoute(self.service, apiInfo, args, kwargs, None,
-                    [apiInfoData, self.jEnv, version, self.config["metadata"]])
+                    [apiInfoData, self.jEnv, version, self.config["metadata"]],
+                    None)
                 setattr(self.service, "apiInfo_v%s" % (version,), route)
 
 
@@ -120,7 +121,7 @@ class API(object):
 
 
 def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
-                  apiProcessors, HTTPType):
+                  apiProcessors, HTTPType, allConfig):
     """
     Creates the routes and puts them in the service.
 
@@ -152,7 +153,8 @@ def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
         kwargs = {"methods": [HTTPType]}
 
         route = _makeRoute(
-            service, APIFunc, args, kwargs, APIProcessor, None)
+            service, APIFunc, args, kwargs, APIProcessor, None,
+            allConfig["metadata"].get("cors", None))
         setattr(service, newFuncName, route)
 
 
@@ -173,7 +175,7 @@ class BadResponseParams(APIError):
     code = 500
 
 
-def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams):
+def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams, cors):
 
     @wraps(method)
     def wrapper(*args, **kw):
@@ -181,8 +183,9 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams):
         for item in args:
             if isinstance(item, Request):
                 req = item
+
         return _setup(
-            method, serviceClass, APIInfo, req, overrideParams, *args, **kw)
+            method, serviceClass, APIInfo, req, overrideParams, cors, *args, **kw)
 
     update_wrapper(wrapper, method)
     route = serviceClass.app.route(*args, **kw)
@@ -190,18 +193,18 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams):
     return route(wrapper)
 
 
-def _setup(func, self, APIInfo, request, overrideParams, *args, **kw):
+def _setup(func, self, APIInfo, request, overrideParams, cors, *args, **kw):
 
     try:
         d = _setupWrapper(
-            func, self, APIInfo, request, overrideParams, *args, **kw)
+            func, self, APIInfo, request, overrideParams, cors, *args, **kw)
         d.addErrback(_handleAPIError, request)
         return d
     except Exception as exp:
         return _handleAPIError(Failure(exp), request)
 
 
-def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
+def _setupWrapper(func, self, APIInfo, request, overrideParams, cors, *args, **kw):
 
     if not overrideParams:
 
@@ -225,7 +228,7 @@ def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
             d.addCallback(_verifyReturnParams, APIInfo)
             d.addErrback(_handleAPIError, request)
 
-        d.addCallback(_formatResponse, request)
+        d.addCallback(_formatResponse, request, cors)
 
         return d
 
@@ -402,7 +405,7 @@ def _handleAPIError(failure, request):
 
 
 
-def _formatResponse(result, request):
+def _formatResponse(result, request, cors):
 
     if request.finished:
         # If we've hit an error, we can't return data, because we've already
@@ -410,6 +413,9 @@ def _formatResponse(result, request):
         return
 
     request.setHeader('Content-Type', 'application/json')
+
+    if cors:
+        request.setHeader("Access-Control-Allow-Origin", str(cors))
 
     response = {
         "status": "success",
