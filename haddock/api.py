@@ -184,8 +184,11 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams, cors):
             if isinstance(item, Request):
                 req = item
 
+        if cors:
+            req.setHeader("Access-Control-Allow-Origin", str(cors))
+
         return _setup(
-            method, serviceClass, APIInfo, req, overrideParams, cors, *args, **kw)
+            method, serviceClass, APIInfo, req, overrideParams, *args, **kw)
 
     update_wrapper(wrapper, method)
     route = serviceClass.app.route(*args, **kw)
@@ -193,18 +196,18 @@ def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams, cors):
     return route(wrapper)
 
 
-def _setup(func, self, APIInfo, request, overrideParams, cors, *args, **kw):
+def _setup(func, self, APIInfo, request, overrideParams, *args, **kw):
 
     try:
         d = _setupWrapper(
-            func, self, APIInfo, request, overrideParams, cors, *args, **kw)
+            func, self, APIInfo, request, overrideParams, *args, **kw)
         d.addErrback(_handleAPIError, request)
         return d
     except Exception as exp:
         return _handleAPIError(Failure(exp), request)
 
 
-def _setupWrapper(func, self, APIInfo, request, overrideParams, cors, *args, **kw):
+def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
 
     if not overrideParams:
 
@@ -228,7 +231,7 @@ def _setupWrapper(func, self, APIInfo, request, overrideParams, cors, *args, **k
             d.addCallback(_verifyReturnParams, APIInfo)
             d.addErrback(_handleAPIError, request)
 
-        d.addCallback(_formatResponse, request, cors)
+        d.addCallback(_formatResponse, request)
 
         return d
 
@@ -405,7 +408,7 @@ def _handleAPIError(failure, request):
 
 
 
-def _formatResponse(result, request, cors):
+def _formatResponse(result, request):
 
     if request.finished:
         # If we've hit an error, we can't return data, because we've already
@@ -413,9 +416,6 @@ def _formatResponse(result, request, cors):
         return
 
     request.setHeader('Content-Type', 'application/json')
-
-    if cors:
-        request.setHeader("Access-Control-Allow-Origin", str(cors))
 
     response = {
         "status": "success",
