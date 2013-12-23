@@ -110,10 +110,13 @@ class API(object):
                     apiInfoData.append((apiLocal, apiProcessors))
 
             if showAPIInfo:
-                args = ["/v%s/apiInfo" % (version,)]
+                if not version == "ROOT":
+                    args = ["/v%s/apiInfo" % (version,)]
+                else:
+                    args = ["/apiInfo"]
                 kwargs = {"methods": ["GET"]}
                 apiInfo = copy(_apiInfo)
-                apiInfo.__name__ = "v%s_apiInfo" % (version,)
+                apiInfo.__name__ = str("v%s_apiInfo" % (version,))
                 route = _makeRoute(self.service, apiInfo, args, kwargs, None,
                     [apiInfoData, self.jEnv, version, self.config["metadata"]],
                     self.config["metadata"])
@@ -157,7 +160,10 @@ def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
     @param HTTPType: The HTTP type we are currently working with.
     """
 
-    endpointLoc = "/v%s/%s" % (version, API["endpoint"])
+    if not version == "ROOT":
+        endpointLoc = "/v%s/%s" % (version, API["endpoint"])
+    else:
+        endpointLoc = "/%s" % (API["endpoint"],)
     newFuncName = str("api_v%s_%s_%s" % (version, API["name"], HTTPType))
 
     if hasattr(sourceClassVersion, "%s_%s" % (API["name"], HTTPType)):

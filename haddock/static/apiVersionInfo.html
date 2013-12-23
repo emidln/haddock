@@ -68,7 +68,11 @@
 			<div class="pure-menu pure-menu-open">
 
 				<ul>
-					<li class="pure-menu-heading">API Information for v{{ version }}</li>
+					{% if version == "ROOT" %}
+						<li class="pure-menu-heading">API Information for the Root API</li>
+					{% else %}
+						<li class="pure-menu-heading">API Information for v{{ version }}</li>
+					{% endif %}
 					{% for apiTop in APIs %}
 						{% set api = apiTop[0] %}
 						<li><a href="#api_{{api.name}}">{{api.friendlyName}}</a></li>
@@ -76,9 +80,17 @@
 					<li class="pure-menu-heading">API Versions</li>
 					{% for ver in metadata.versions %}
 						{% if ver == version %}
-							<li><a href="#">v{{ver}} <small>(Current)</small></a></li>
+							{% if ver == "ROOT" %}
+								<li><a href="#">Root API <small>(Current)</small></a></li>
+							{% else %}
+								<li><a href="#">v{{ver}} <small>(Current)</small></a></li>
+							{% endif %}
 						{% else %}
-							<li><a href="/v{{ver}}/apiInfo">v{{ver}}</a></li>
+							{% if ver == "ROOT" %}
+								<li><a href="/apiInfo">Root API</a></li>
+							{% else %}
+								<li><a href="/v{{ver}}/apiInfo">v{{ver}}</a></li>
+							{% endif %}
 						{% endif %}
 
 					{% endfor %}
@@ -108,7 +120,11 @@
 						{% set HTTPType = processorTmp[1] %}
 
 						<div class="pure-u-1-1 processor-title">
-							<h2>HTTP {{ HTTPType }} /v{{version}}/{{api.endpoint}}</h2>
+							{% if version == "ROOT" %}
+								<h2>HTTP {{ HTTPType }} /{{api.endpoint}}</h2>
+							{% else %}
+								<h2>HTTP {{ HTTPType }} /v{{version}}/{{api.endpoint}}</h2>
+							{% endif %}
 						</div>
 
 						<div class="pure-g processor-split">
