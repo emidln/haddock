@@ -35,6 +35,9 @@ The `api` contains a list of dicts, which are API endpoints. In each API method 
 - `friendlyName`: The user-friendly name.
 - `description`: The user-friendly description.
 - `endpoint`: The URL endpoint. For example, it will make a processor for v1 be under "/v1/weather".
+- `requiresAPIKey` (optional): A boolean that defines whether this API needs an API key. Default is false.
+- `rateLimitNumber` (optional): How many times per unit of time that this API may be called by the API key.
+- `rateLimitTimescale` (optional): The timescale that the limit number works off, in seconds. For example, a `rateLimitNumber` of 10 and a `rateLimitTimescale` of 60 means that 10 requests can be made in a sliding window of 60 seconds.
 - `getProcessors` (optional): A list of processors (see below). These processors respond to a HTTP GET.
 - `postProcessors` (optional): A list of processors (see below). These processors respond to a HTTP POST.
 
@@ -46,7 +49,7 @@ Processors are the bits of your API that do things. They are made up of dicts, a
 
 - `versions`: A list of versions (see `metadata`) which this endpoint applies to.
 - `paramsType` (optional): Where the params will be - either `url` (in `request.args`) or `jsonbody` (for example, the body of a HTTP POST). Defaults to `url`.
-- `returnFormat` (optional): 
+- `returnFormat` (optional): Either `dict` or `list` (which means a `list` of `dict`s, conforming to the params below)
 - `requiredParams` (optional): Parameters that the API consumer *has* to give. This is a list, the contents of which are explained below.
 - `optionalParams` (optional): Parameters that the API consumer can give, if they want to. This is a list, the contents of which are explained below.
 - `returnParams` (optional): Parameters that your API *has* to return. This is a list, the contents of which are explained below.

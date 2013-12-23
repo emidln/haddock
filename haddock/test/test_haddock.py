@@ -32,7 +32,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
 
     def test_createdStructure(self):
 
-        res = inspect.getmembers(self.api.service, predicate=inspect.isfunction)
+        res = inspect.getmembers(
+            self.api.getService(), predicate=inspect.isfunction)
         functions = []
         
         for item in res:
@@ -53,7 +54,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             [error] = self.flushLoggedErrors()
             self.assertIsInstance(error.value, AttributeError)
 
-        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
@@ -67,7 +68,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
             {"unixTimestamp": "1"}).addBoth(_cb)
 
 
@@ -81,7 +82,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1", "muffin": "yes plz"}
             ).addBoth(_cb)
 
@@ -98,7 +99,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             "username": "hawkowl"
         }
 
-        return rm.testItem(self.api.service.api_v2_motd_POST, "/v2/motd/POST",
+        return rm.testItem(self.api.getService().api_v2_motd_POST, "/v2/motd/POST",
             params, method="POST", useBody=True).addBoth(_cb)
 
 
@@ -129,7 +130,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             expectedResult = "<title>API Information for v1</title>"
             self.assertSubstring(expectedResult, result)
 
-        return rm.testItem(self.api.service.apiInfo_v1, "/v1/apiInfo",{}
+        return rm.testItem(self.api.getService().apiInfo_v1, "/v1/apiInfo",{}
             ).addBoth(_cb)
 
 
@@ -148,7 +149,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             "username": "hawkowl"
         }
 
-        return rm.testItem(self.api.service.api_v1_motd_POST, "/v1/motd/POST",
+        return rm.testItem(self.api.getService().api_v1_motd_POST, "/v1/motd/POST",
             params, method="POST", useBody=True).addBoth(_cb)
 
 
@@ -194,7 +195,7 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
@@ -209,7 +210,7 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.service.api_v2_motd_GET, "/v2/motd",
+        return rm.testItem(self.api.getService().api_v2_motd_GET, "/v2/motd",
             {}).addBoth(_cb)
 
 

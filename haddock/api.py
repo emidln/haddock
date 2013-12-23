@@ -71,12 +71,12 @@ class API(object):
         """
         self.config = config
         if not serviceClass:
-            self.service = DefaultServiceClass()
+            self.serviceClass = DefaultServiceClass()
         else:
-            self.service = serviceClass
+            self.serviceClass = serviceClass
 
-        if not hasattr(self.service, "app"):
-            self.service.app = Klein()
+        if not hasattr(self.serviceClass, "app"):
+            self.serviceClass.app = Klein()
 
         showAPIInfo = self.config["metadata"].get("apiInfo", False)
 
@@ -84,7 +84,6 @@ class API(object):
             self.jEnv = Environment(loader=PackageLoader('haddock', 'static'))
 
         for version in self.config["metadata"]["versions"]:
-
             apiInfoData = []
 
             if hasattr(APIClass, "v%s" % (version,)):
@@ -96,12 +95,14 @@ class API(object):
                 apiProcessors = []
 
                 for processor in api.get("getProcessors", []):
-                    _createRoutes(self.service, version, api, processor,
-                        APIVersion, apiProcessors, "GET", self.config)
+                    _createRoutes(
+                        self.serviceClass, APIVersion, version, "GET",
+                        apiProcessors, self.config["metadata"], api, processor)
 
                 for processor in api.get("postProcessors", []):
-                    _createRoutes(self.service, version, api, processor,
-                        APIVersion, apiProcessors, "POST", self.config)
+                    _createRoutes(
+                        self.serviceClass, APIVersion, version, "POST",
+                        apiProcessors, self.config["metadata"], api, processor)
 
                 if showAPIInfo:
                     apiLocal = copy(api)
@@ -111,41 +112,44 @@ class API(object):
 
             if showAPIInfo:
                 if not version == "ROOT":
-                    args = ["/v%s/apiInfo" % (version,)]
+                    endpointPath = "/v%s/apiInfo" % (version,)
                 else:
-                    args = ["/apiInfo"]
+                    endpointPath = "/apiInfo"
                 kwargs = {"methods": ["GET"]}
                 apiInfo = copy(_apiInfo)
                 apiInfo.__name__ = str("v%s_apiInfo" % (version,))
-                route = _makeRoute(self.service, apiInfo, args, kwargs, None,
+
+                route = _makeRoute(
+                    self.serviceClass, apiInfo, endpointPath, kwargs,
                     [apiInfoData, self.jEnv, version, self.config["metadata"]],
-                    self.config["metadata"])
-                setattr(self.service, "apiInfo_v%s" % (version,), route)
+                    self.config["metadata"], None, None)
+
+                setattr(self.serviceClass, "apiInfo_v%s" % (version,), route)
 
 
     def getService(self):
         """
         Returns the service object.
         """
-        return self.service
+        return self.serviceClass
 
 
     def getResource(self):
         """
         Returns a Resource, from the Klein app.
         """
-        return self.service.app.resource()
+        return self.serviceClass.app.resource()
 
 
     def getApp(self):
         """
         Returns the Klein app.
         """
-        return self.service.app
+        return self.serviceClass.app
 
 
-def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
-                  apiProcessors, HTTPType, allConfig):
+def _createRoutes(serviceClass, sourceClassVersion, APIVersion, HTTPType,
+                  APIProcessorList, configMetadata, configAPI, configProcessor):
     """
     Creates the routes and puts them in the service.
 
@@ -159,36 +163,32 @@ def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
     @param apiProcessors: For L{_apiInfo}.
     @param HTTPType: The HTTP type we are currently working with.
     """
+    sourceClassLocation = "%s_%s" % (configAPI["name"], HTTPType)
+    newFuncName = str("api_v%s_%s" % (APIVersion, sourceClassLocation))
 
-    if not version == "ROOT":
-        endpointLoc = "/v%s/%s" % (version, API["endpoint"])
+    if not APIVersion == "ROOT":
+        endpointLoc = "/v%s/%s" % (APIVersion, configAPI["endpoint"])
     else:
-        endpointLoc = "/%s" % (API["endpoint"],)
-    newFuncName = str("api_v%s_%s_%s" % (version, API["name"], HTTPType))
+        endpointLoc = "/%s" % (configAPI["endpoint"],)
 
-    if hasattr(sourceClassVersion, "%s_%s" % (API["name"], HTTPType)):
-        APIFunc = copy(getattr(
-            sourceClassVersion, "%s_%s" % (API["name"], HTTPType)).im_func)
+    if hasattr(sourceClassVersion, sourceClassLocation):
+        APIFunc = copy(getattr(sourceClassVersion, sourceClassLocation).im_func)
         APIFunc.__name__ = newFuncName
     else:
         raise MissingHaddockAPIFunction(
-            "no %s_%s in v%s" % (API["name"], HTTPType, version))
+            "no %s in v%s" % (sourceClassLocation, APIVersion))
 
-    if version in APIProcessor["versions"]:
-
-        apiProcessors.append((APIProcessor, HTTPType))
-
-        args = [endpointLoc]
+    if APIVersion in configProcessor["versions"]:
         kwargs = {"methods": [HTTPType]}
+        route = _makeRoute(serviceClass, APIFunc, endpointLoc, kwargs, None, 
+            configMetadata, configAPI, configProcessor)
 
-        route = _makeRoute(service, APIFunc, args, kwargs, APIProcessor, None,
-            allConfig["metadata"])
-        setattr(service, newFuncName, route)
+        setattr(serviceClass, newFuncName, route)
+        APIProcessorList.append((configProcessor, HTTPType))
 
 
-
-def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
-               APIMetadata):
+def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
+               configMetadata, configAPI, configProcessor):
 
     @wraps(func)
     def wrapper(*args, **kw):
@@ -198,31 +198,31 @@ def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
                 request = item
                 request.errored = False
 
-        if APIMetadata.get("cors"):
+        if configMetadata.get("cors"):
             request.setHeader(
-                "Access-Control-Allow-Origin", str(APIMetadata["cors"]))
+                "Access-Control-Allow-Origin", str(configMetadata["cors"]))
 
         try:
             if not overrideParams:
                 params = None
-                paramsType = APIInfo.get("paramsType", "url")
+                paramsType = configProcessor.get("paramsType", "url")
 
                 if paramsType == "url":
                     args = request.args
                     params = {}
                     for key, data in args.iteritems():
                         params[key] = data[0]
-                    params = _getParams(params, APIInfo)
+                    params = _getParams(params, configProcessor)
                 elif paramsType == "jsonbody":
                     requestContent = request.content.read()
                     params = json.loads(requestContent)
-                    params = _getParams(params, APIInfo)
+                    params = _getParams(params, configProcessor)
 
                 d = maybeDeferred(func, serviceClass, request, params)        
                 d.addErrback(_handleAPIError, request)
 
-                if APIInfo.get("returnParams"):
-                    d.addCallback(_verifyReturnParams, APIInfo)
+                if configProcessor.get("returnParams"):
+                    d.addCallback(_verifyReturnParams, configProcessor)
                     d.addErrback(_handleAPIError, request)
 
                 d.addCallback(_formatResponse, request)
@@ -234,7 +234,7 @@ def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
             return _handleAPIError(Failure(exp), request)
 
     update_wrapper(wrapper, func)
-    route = serviceClass.app.route(*args, **kw)
+    route = serviceClass.app.route(endpointPath, **keywordArgs)
 
     return route(wrapper)
 
