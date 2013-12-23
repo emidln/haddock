@@ -49,7 +49,6 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
 
             [error] = self.flushLoggedErrors()
             self.assertIsInstance(error.value, AttributeError)
-            self.assertIsNone(result)
 
         return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
@@ -74,7 +73,8 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
         def _cb(result):
 
             expectedResult = json.dumps(json.loads("""
-                {"status": "success", "data": {"windSpeed": 20, "temperature": 30, "isRaining": false}}
+                {"status": "success", "data": {
+                "windSpeed": 20, "temperature": 30, "isRaining": false}}
             """))
             self.assertEqual(expectedResult, result)
 
@@ -112,17 +112,14 @@ class APIExample(object):
         def __init__(self, outer):
             pass
 
-        @staticmethod
         def weather_GET(service, request, params):
 
             return service.doSomething()
 
-        @staticmethod
         def motd_GET(service, request, params):
 
             return service.motd
 
-        @staticmethod
         def motd_POST(service, request, params):
 
             service.motd = {
@@ -139,12 +136,10 @@ class APIExample(object):
 
             self.motd_GET = outer.v1.motd_GET
 
-        @staticmethod
         def weather_GET(service, request, params):
 
             return {"temperature": 30, "windSpeed": 20, "isRaining": "YES"}
 
-        @staticmethod
         def motd_POST(service, request, params):
 
             return {"status": "BRILLIANT"}

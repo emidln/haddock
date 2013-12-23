@@ -26,18 +26,16 @@ class APIExample(object):
             # `outer` is actually the a reference to the master `APIExample`.
             pass
 
-        @staticmethod
-        def weather_GET(service, request, params):
+        def weather_GET(self, request, params):
             # Call a method on your service class.
-            return service.doSomething()
+            return self.doSomething()
 
     class v2(object):
         def __init__(self, outer):
             # `outer` is actually the a reference to the master `APIExample`.
             pass
 
-        @staticmethod
-        def weather_GET(service, request, params):
+        def weather_GET(self, request, params):
             # Return an object - Haddock will check it according to your API
             # definition and JSONise it.
             return {"temperature": 30, "windSpeed": 20, "isRaining": "YES"}

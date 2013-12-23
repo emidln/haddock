@@ -140,7 +140,8 @@ def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
     newFuncName = str("api_v%s_%s_%s" % (version, API["name"], HTTPType))
 
     if hasattr(sourceClassVersion, "%s_%s" % (API["name"], HTTPType)):
-        APIFunc = getattr(sourceClassVersion, "%s_%s" % (API["name"], HTTPType))
+        APIFunc = copy(getattr(
+            sourceClassVersion, "%s_%s" % (API["name"], HTTPType)).im_func)
         APIFunc.__name__ = newFuncName
     else:
         raise Exception("no %s_%s in v%s" % (API["name"], HTTPType, version))
@@ -152,14 +153,12 @@ def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
         args = [endpointLoc]
         kwargs = {"methods": [HTTPType]}
 
-        route = _makeRoute(
-            service, APIFunc, args, kwargs, APIProcessor, None,
-            allConfig["metadata"].get("cors", None))
+        route = _makeRoute(service, APIFunc, args, kwargs, APIProcessor, None,
+            allConfig["metadata"])
         setattr(service, newFuncName, route)
 
 
 # The code below is partially based on the equiv in Praekelt's Aludel
-
 class APIError(Exception):
     code = 500
 
@@ -175,70 +174,53 @@ class BadResponseParams(APIError):
     code = 500
 
 
-def _makeRoute(serviceClass, method, args, kw, APIInfo, overrideParams, cors):
+def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
+               APIMetadata):
 
-    @wraps(method)
+    @wraps(func)
     def wrapper(*args, **kw):
-        req = None
+        request = None
         for item in args:
             if isinstance(item, Request):
-                req = item
+                request = item
 
-        if cors:
-            req.setHeader("Access-Control-Allow-Origin", str(cors))
+        if APIMetadata.get("cors"):
+            request.setHeader(
+                "Access-Control-Allow-Origin", APIMetadata["cors"])
 
-        return _setup(
-            method, serviceClass, APIInfo, req, overrideParams, *args, **kw)
+        try:
+            if not overrideParams:
+                params = None
+                paramsType = APIInfo.get("paramsType", "url")
 
-    update_wrapper(wrapper, method)
+                if paramsType == "url":
+                    args = request.args
+                    params = {}
+                    for key, data in args.iteritems():
+                        params[key] = data[0]
+                    params = _getParams(params, APIInfo)
+                elif paramsType == "jsonbody":
+                    requestContent = json.loads(request.content.read())
+                    params = _getParams(params, APIInfo)
+
+                d = maybeDeferred(func, serviceClass, request, params)        
+                d.addErrback(_handleAPIError, request)
+
+                if APIInfo.get("returnParams"):
+                    d.addCallback(_verifyReturnParams, APIInfo)
+                    d.addErrback(_handleAPIError, request)
+
+                return d.addCallback(_formatResponse, request)
+            else:
+                return maybeDeferred(func, self, request, overrideParams)
+
+        except Exception as exp:
+            return _handleAPIError(Failure(exp), request)
+
+    update_wrapper(wrapper, func)
     route = serviceClass.app.route(*args, **kw)
 
     return route(wrapper)
-
-
-def _setup(func, self, APIInfo, request, overrideParams, *args, **kw):
-
-    try:
-        d = _setupWrapper(
-            func, self, APIInfo, request, overrideParams, *args, **kw)
-        d.addErrback(_handleAPIError, request)
-        return d
-    except Exception as exp:
-        return _handleAPIError(Failure(exp), request)
-
-
-def _setupWrapper(func, self, APIInfo, request, overrideParams, *args, **kw):
-
-    if not overrideParams:
-
-        params = None
-        paramsType = APIInfo.get("paramsType", "url")
-
-        if paramsType == "url":
-            args = request.args
-            params = {}
-            for key, data in args.iteritems():
-                params[key] = data[0]
-            params = _getParams(params, APIInfo)
-        elif paramsType == "jsonbody":
-            requestContent = json.loads(request.content.read())
-            params = _getParams(params, APIInfo)
-
-        d = maybeDeferred(func, self, request, params)        
-        d.addErrback(_handleAPIError, request)
-
-        if APIInfo.get("returnParams"):
-            d.addCallback(_verifyReturnParams, APIInfo)
-            d.addErrback(_handleAPIError, request)
-
-        d.addCallback(_formatResponse, request)
-
-        return d
-
-    else:
-
-        d = maybeDeferred(func, self, request, overrideParams)
-        return d
 
 
 def _verifyReturnParams(result, APIInfo):
@@ -300,6 +282,7 @@ def _normaliseParams(params):
             })
 
     return (finishedParams, set(paramKeys))
+
 
 def _checkParamOptions(item, data, exp):
 
@@ -383,6 +366,7 @@ def _handleAPIError(failure, request):
     errorcode = 500
 
     if not isinstance(error, BadRequestParams):
+        traceback.print_exc(file=sys.stderr)
         log.err(error)
     if hasattr(error, "code"):
         errorcode = error.code
@@ -403,9 +387,7 @@ def _handleAPIError(failure, request):
     }
 
     request.write(json.dumps(response))
-    request.finish()
     return json.dumps(response)
-
 
 
 def _formatResponse(result, request):
