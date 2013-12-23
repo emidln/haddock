@@ -48,9 +48,31 @@
             "endpoint": "motd",
             "getProcessors": [
                 {
-                    "versions": [1, 2],
+                    "versions": [1],
                     "paramsType": "url",
                     "returnFormat": "dict",
+                    "returnParams": [
+                        {
+                            "param": "message",
+                            "description": "The message of the day.",
+                            "type": "string"
+                        },
+                        {
+                            "param": "setBy",
+                            "description": "The username that last set the MOTD.",
+                            "type": "string"
+                        },
+                        {
+                            "param": "setWhen",
+                            "description": "The UNIX timestamp of when the MOTD was set.",
+                            "type": "numeric"
+                        }
+                    ]
+                },
+                {
+                    "versions": [2],
+                    "paramsType": "url",
+                    "returnFormat": "list",
                     "returnParams": [
                         {
                             "param": "message",

@@ -198,6 +198,21 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
+    def test_returnList(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "success",
+                "data": [{"message": "NO MOTD SET",
+                "setBy": "nobody", "setWhen": 0}]}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.service.api_v2_motd_GET, "/v2/motd",
+            {}).addBoth(_cb)
+
+
     def test_getService(self):
 
         service = self.api.getService()
@@ -255,8 +270,11 @@ class APIExample(object):
 
     class v2(object):
         def __init__(self, outer):
+            pass
 
-            self.motd_GET = outer.v1.motd_GET
+        def motd_GET(service, request, params):
+
+            return [service.motd]
 
         def weather_GET(service, request, params):
 
