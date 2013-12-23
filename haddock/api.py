@@ -165,14 +165,16 @@ def _createRoutes(serviceClass, sourceClassVersion, APIVersion, HTTPType,
     else:
         endpointLoc = "/%s" % (configAPI["endpoint"],)
 
-    if hasattr(sourceClassVersion, sourceClassLocation):
-        APIFunc = copy(getattr(sourceClassVersion, sourceClassLocation).im_func)
-        APIFunc.__name__ = newFuncName
-    else:
-        raise MissingHaddockAPIFunction(
-            "no %s in v%s" % (sourceClassLocation, APIVersion))
-
     if APIVersion in configProcessor["versions"]:
+
+        if hasattr(sourceClassVersion, sourceClassLocation):
+            APIFunc = copy(
+                getattr(sourceClassVersion, sourceClassLocation).im_func)
+            APIFunc.__name__ = newFuncName
+        else:
+            raise MissingHaddockAPIFunction(
+                "no %s in v%s" % (sourceClassLocation, APIVersion))
+
         kwargs = {"methods": [HTTPType]}
         route = _makeRoute(serviceClass, APIFunc, endpointLoc, kwargs, None, 
             configMetadata, configAPI, configProcessor)
@@ -184,25 +186,11 @@ def _createRoutes(serviceClass, sourceClassVersion, APIVersion, HTTPType,
 def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                configMetadata, configAPI, configProcessor):
 
-    def _run(result, request):
+    def _run(result, request, params):
 
         try:
             if not overrideParams:
-
-                params = None
-                paramsType = configProcessor.get("paramsType", "url")
-
-                if paramsType == "url":
-                    args = request.args
-                    params = {}
-                    for key, data in args.iteritems():
-                        params[key] = data[0]
-                    params = _getParams(params, configProcessor)
-                elif paramsType == "jsonbody":
-                    requestContent = request.content.read()
-                    params = json.loads(requestContent)
-                    params = _getParams(params, configProcessor)
-
+                
                 params["haddockAuth"] = result
 
                 d = maybeDeferred(func, serviceClass, request, params)
@@ -235,6 +223,23 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                 "Access-Control-Allow-Origin", str(configMetadata["cors"]))
 
         try:
+            params = None
+
+            if not overrideParams:
+
+                paramsType = configProcessor.get("paramsType", "url")
+
+                if paramsType == "url":
+                    args = request.args
+                    params = {}
+                    for key, data in args.iteritems():
+                        params[key] = data[0]
+                    params = _getParams(params, configProcessor)
+                elif paramsType == "jsonbody":
+                    requestContent = request.content.read()
+                    params = json.loads(requestContent)
+                    params = _getParams(params, configProcessor)
+
             if configAPI and configAPI.get("requiresAuthentication", False):
 
                 d = defer.Deferred()
@@ -247,28 +252,24 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                     if authType.lower() == "basic":
                         d.addCallback(lambda _:
                             serviceClass.auth.auth_usernameAndPassword(
-                            request.getUser(), request.getPassword()))
+                            request.getUser(), request.getPassword(),
+                            endpointPath, params))
                         authAdditional = request.getUser()
-                    elif authType.lower() == "hmac":
-                        authDetails = base64.decodestring(authDetails)
-                        authUsername, authHMAC = authDetails.split(':', 1)
-                        d.addCallback(lambda _:
-                            serviceClass.auth.auth_usernameAndHMAC(
-                            authUsername, authHMAC))
-                        authAdditional = authUsername
+                        d.addErrback(_handleAPIError, request)
                     else:
-                        return _handleAPIError(Failure(AuthenticationRequired("Malformed Authentication header.")), request)
+                        return _handleAPIError(Failure(AuthenticationRequired(
+                            "Malformed Authentication header.")), request)
                 else:
-                    return _handleAPIError(Failure(AuthenticationRequired("Authentication required.")), request)
+                    return _handleAPIError(Failure(AuthenticationRequired(
+                        "Authentication required.")), request)
 
-                d.addErrback(_handleAPIError, request)
-                d.addCallback(lambda _: _run(authAdditional, request))
+                d.addCallback(lambda _: _run(authAdditional, request, params))
                 d.addErrback(_handleAPIError, request)
                 d.callback(True)
                 return d
 
             else:
-                return _run(None, request)
+                return _run(None, request, params)
 
         except Exception as exp:
             return _handleAPIError(Failure(exp), request)

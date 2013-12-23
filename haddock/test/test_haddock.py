@@ -6,6 +6,9 @@ from twisted.web.static import File
 
 import haddock.test.requestMock as rm
 
+from haddock import AuthenticationFailed
+from haddock.api import DefaultServiceClass
+
 import haddock
 import haddock.api
 import inspect
@@ -27,7 +30,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             os.path.dirname(__file__)), 'betterAPI.json')
         self.config = json.load(open(path))
 
-        self.api = haddock.api.API(APIExample, self.config)
+        self.api = haddock.api.API(
+            APIExample, self.config, serviceClass=myServiceClass())
 
 
     def test_createdStructure(self):
@@ -158,18 +162,40 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
         def _cb(result):
 
             expectedResult = json.dumps(json.loads("""
-                {"status": "success",
-                "data": {"status": "OK"}}
+                {"status": "fail", "data": "Authentication required."}
             """))
             self.assertEqual(expectedResult, result)
 
-        params = {
-            "message": "hi",
-            "username": "hawkowl"
-        }
+        return rm.testItem(self.api.getService().api_v1_authtest_GET, "/v1/authtest",
+            {}).addBoth(_cb)
 
-        return rm.testItem(self.api.getService().api_v1_motd_POST, "/v1/motd/POST",
-            params, method="POST", useBody=True).addBoth(_cb)
+
+    def test_authSuccess(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "success", "data": {"status": "OK"}}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.getService().api_v1_authtest_GET,
+            "/v1/authtest", {},
+            headers={"Authorization": ["Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="]}
+            ).addBoth(_cb)
+
+
+    def test_authFailure(self):
+
+        def _cb(result):
+
+            expectedResult = None
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.getService().api_v1_authtest_GET,
+            "/v1/authtest", {},
+            headers={"Authorization": ["Basic QZxaZGRpbjpvcGVuIHNlc2FtZQ=="]}
+            ).addBoth(_cb)
 
 
     def test_getService(self):
@@ -288,6 +314,9 @@ class APIExample(object):
 
             return {"status": "OK"}
 
+        def authtest_GET(service, request, params):
+            return {"status": "OK"}
+
     class v2(object):
         def __init__(self, outer):
             pass
@@ -328,6 +357,9 @@ class MissingVersionFunctionAPIExample(object):
 
             return {"status": "OK"}
 
+        def authtest_GET(service, request, params):
+            pass
+
     class v2(object):
         def __init__(self, outer):
 
@@ -360,3 +392,22 @@ class MissingVersionClassAPIExample(object):
             }
 
             return {"status": "OK"}
+
+        def authtest_GET(service, request, params):
+            pass
+
+
+class DummyHaddockAuthenticator(object):
+
+    def auth_usernameAndPassword(self, username, password, endpoint, params):
+        
+        if username == "Aladdin" and password == "open sesame":
+            return True
+
+        raise AuthenticationFailed("Incorrect username or password.")
+
+
+class myServiceClass(DefaultServiceClass):
+
+    auth = DummyHaddockAuthenticator()
+

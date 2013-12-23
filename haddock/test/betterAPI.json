@@ -42,6 +42,18 @@
             ]
         },
         {
+            "name": "authtest",
+            "friendlyName": "authtest",
+            "description": "an authentication test",
+            "endpoint": "authtest",
+            "requiresAuthentication": true,
+            "getProcessors": [
+                {
+                    "versions": [1]
+                }
+            ]
+        },
+        {
             "name": "motd",
             "friendlyName": "Message Of the Day",
             "description": "Accessing and setting the Message Of The Day.",
