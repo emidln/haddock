@@ -153,6 +153,25 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             params, method="POST", useBody=True).addBoth(_cb)
 
 
+    def test_authRequired(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "success",
+                "data": {"status": "OK"}}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        params = {
+            "message": "hi",
+            "username": "hawkowl"
+        }
+
+        return rm.testItem(self.api.getService().api_v1_motd_POST, "/v1/motd/POST",
+            params, method="POST", useBody=True).addBoth(_cb)
+
+
     def test_getService(self):
 
         service = self.api.getService()

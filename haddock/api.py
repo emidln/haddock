@@ -2,40 +2,33 @@ from klein import Klein
 
 from functools import wraps, update_wrapper
 
-from twisted.python import log
-from twisted.web.http import Request
-from twisted.python.failure import Failure
+from twisted.internet import defer
 from twisted.internet.defer import maybeDeferred
+from twisted.python import log
+from twisted.python.failure import Failure
+from twisted.web.http import Request
 from twisted.web.static import File
 
 from jinja2 import Environment, PackageLoader
 
 from copy import copy
 
+from haddock import APIError, BadRequestParams, BadResponseParams, AuthenticationRequired, AuthenticationFailed
+
 import inspect
 import json
 import os, sys, traceback
+import base64
+import haddock.auth
 
 
-class APIError(Exception):
-    code = 500
-
-    def __init__(self, message, code=None):
-        super(APIError, self).__init__(message)
-        if code is not None:
-            self.code = code
-
-class BadRequestParams(APIError):
-    code = 400
-
-class BadResponseParams(APIError):
-    code = 500
 
 class MissingHaddockAPIFunction(Exception):
     pass
 
 class MissingHaddockAPIVersionClass(Exception):
     pass
+
 
 
 class DefaultServiceClass(object):
@@ -45,6 +38,7 @@ class DefaultServiceClass(object):
     @ivar app: A L{Klein} app.
     """
     app = Klein()
+    auth = haddock.auth.DefaultHaddockAuthenticator()
 
     @app.route("/content", branch=True)
     def _staticFile(self, request):
@@ -190,20 +184,11 @@ def _createRoutes(serviceClass, sourceClassVersion, APIVersion, HTTPType,
 def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                configMetadata, configAPI, configProcessor):
 
-    @wraps(func)
-    def wrapper(*args, **kw):
-        request = None
-        for item in args:
-            if isinstance(item, Request):
-                request = item
-                request.errored = False
-
-        if configMetadata.get("cors"):
-            request.setHeader(
-                "Access-Control-Allow-Origin", str(configMetadata["cors"]))
+    def _run(result, request):
 
         try:
             if not overrideParams:
+
                 params = None
                 paramsType = configProcessor.get("paramsType", "url")
 
@@ -218,7 +203,9 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                     params = json.loads(requestContent)
                     params = _getParams(params, configProcessor)
 
-                d = maybeDeferred(func, serviceClass, request, params)        
+                params["haddockAuth"] = result
+
+                d = maybeDeferred(func, serviceClass, request, params)
                 d.addErrback(_handleAPIError, request)
 
                 if configProcessor.get("returnParams"):
@@ -229,6 +216,59 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                 return d
             else:
                 return maybeDeferred(func, serviceClass, request, overrideParams)
+
+        except Exception as exp:
+            return _handleAPIError(Failure(exp), request)
+
+
+    @wraps(func)
+    def wrapper(*args, **kw):
+
+        request = None
+        for item in args:
+            if isinstance(item, Request):
+                request = item
+                request.errored = False
+
+        if configMetadata.get("cors"):
+            request.setHeader(
+                "Access-Control-Allow-Origin", str(configMetadata["cors"]))
+
+        try:
+            if configAPI and configAPI.get("requiresAuthentication", False):
+
+                d = defer.Deferred()
+                auth = request.getHeader("Authorization")
+                authAdditional = None
+
+                if auth:
+                    authType, authDetails = auth.split()
+
+                    if authType.lower() == "basic":
+                        d.addCallback(lambda _:
+                            serviceClass.auth.auth_usernameAndPassword(
+                            request.getUser(), request.getPassword()))
+                        authAdditional = request.getUser()
+                    elif authType.lower() == "hmac":
+                        authDetails = base64.decodestring(authDetails)
+                        authUsername, authHMAC = authDetails.split(':', 1)
+                        d.addCallback(lambda _:
+                            serviceClass.auth.auth_usernameAndHMAC(
+                            authUsername, authHMAC))
+                        authAdditional = authUsername
+                    else:
+                        return _handleAPIError(Failure(AuthenticationRequired("Malformed Authentication header.")), request)
+                else:
+                    return _handleAPIError(Failure(AuthenticationRequired("Authentication required.")), request)
+
+                d.addErrback(_handleAPIError, request)
+                d.addCallback(lambda _: _run(authAdditional, request))
+                d.addErrback(_handleAPIError, request)
+                d.callback(True)
+                return d
+
+            else:
+                return _run(None, request)
 
         except Exception as exp:
             return _handleAPIError(Failure(exp), request)
@@ -404,6 +444,8 @@ def _handleAPIError(failure, request):
     }
 
     request.errored = True
+    request.write(json.dumps(response))
+    request.finish()
     return json.dumps(response)
 
 

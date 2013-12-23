@@ -35,7 +35,7 @@ The `api` contains a list of dicts, which are API endpoints. In each API method 
 - `friendlyName`: The user-friendly name.
 - `description`: The user-friendly description.
 - `endpoint`: The URL endpoint. For example, it will make a processor for v1 be under "/v1/weather".
-- `requiresAPIKey` (optional): A boolean that defines whether this API needs an API key. Default is false.
+- `requiresAuthentication` (optional): A boolean that defines whether this API needs authentication. Default is false.
 - `rateLimitNumber` (optional): How many times per unit of time that this API may be called by the API key.
 - `rateLimitTimescale` (optional): The timescale that the limit number works off, in seconds. For example, a `rateLimitNumber` of 10 and a `rateLimitTimescale` of 60 means that 10 requests can be made in a sliding window of 60 seconds.
 - `getProcessors` (optional): A list of processors (see below). These processors respond to a HTTP GET.
