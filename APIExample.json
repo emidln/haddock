@@ -14,7 +14,6 @@
             "friendlyName": "Weather",
             "description": "Accessing weather.",
             "endpoint": "weather",
-            "requiresAuthentication": true,
             "getProcessors": [
                 {   
                     "versions": [1],
