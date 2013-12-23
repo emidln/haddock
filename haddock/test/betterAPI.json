@@ -4,7 +4,8 @@
         "name": "APIExample",
         "friendlyName": "HawkOwl's API Example",
         "versions": [1, 2],
-        "apiInfo": true
+        "apiInfo": true,
+        "cors": "*"
     },
 
     "api": [
@@ -96,10 +97,7 @@
                                     "data": "OK",
                                     "meaning": "The request was successful."
                                 },
-                                {
-                                    "data": "FAIL",
-                                    "meaning": "The request failed."
-                                }
+                                "FAIL"
                             ]
                         }
                     ]

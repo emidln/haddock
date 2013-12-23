@@ -133,8 +133,6 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             ).addBoth(_cb)
 
 
-
-
     def test_jsonBody(self):
 
         def _cb(result):
@@ -266,7 +264,7 @@ class APIExample(object):
 
         def motd_POST(service, request, params):
 
-            return {"status": "BRILLIANT"}
+            return json.dumps({"status": "BRILLIANT"})
 
 
 class MissingVersionFunctionAPIExample(object):
