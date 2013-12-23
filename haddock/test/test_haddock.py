@@ -1,4 +1,5 @@
 from twisted.trial import unittest
+from twisted.web.resource import Resource
 
 from klein import Klein
 from twisted.web.static import File
@@ -10,8 +11,10 @@ import haddock.api
 import inspect
 import exceptions
 import json
+import traceback
 import time
 import os
+import sys
 
 
 
@@ -22,9 +25,9 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
     def setUp(self):
         path = os.path.join(os.path.abspath(
             os.path.dirname(__file__)), 'betterAPI.json')
-        config = json.load(open(path))
+        self.config = json.load(open(path))
 
-        self.api = haddock.api.API(APIExample, config)
+        self.api = haddock.api.API(APIExample, self.config)
 
 
     def test_createdStructure(self):
@@ -52,6 +55,121 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
 
         return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
+
+
+    def test_requiredParam(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "fail",
+                "data": "Missing request parameters: \'postcode\'"}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
+            {"unixTimestamp": "1"}).addBoth(_cb)
+
+
+    def test_nonSpecifiedParam(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "fail",
+                "data": "Unexpected request parameters: \'muffin\'"}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.service.api_v1_weather_GET, "/v1/weather",
+            {"postcode": "9999", "unixTimestamp": "1", "muffin": "yes plz"}
+            ).addBoth(_cb)
+
+
+    def test_incorrectParamReturn(self):
+
+        def _cb(result):
+
+            [error] = self.flushLoggedErrors()
+            self.assertIsInstance(error.value, haddock.api.BadResponseParams)
+
+        params = {
+            "message": "hi",
+            "username": "hawkowl"
+        }
+
+        return rm.testItem(self.api.service.api_v2_motd_POST, "/v2/motd/POST",
+            params, method="POST", useBody=True).addBoth(_cb)
+
+
+    def test_missingFunction(self):
+
+        try:
+            self.api = haddock.api.API(
+                MissingVersionFunctionAPIExample, self.config)
+        except Exception, e:
+            self.assertIsInstance(e, haddock.api.MissingHaddockAPIFunction)
+        else:
+            self.fail()
+
+
+    def test_missingClass(self):
+
+        try:
+            self.api = haddock.api.API(
+                MissingVersionClassAPIExample, self.config)
+        except Exception, e:
+            self.assertIsInstance(e, haddock.api.MissingHaddockAPIVersionClass)
+
+
+    def test_APIDocs(self):
+
+        def _cb(result):
+
+            expectedResult = "<title>API Information for v1</title>"
+            self.assertSubstring(expectedResult, result)
+
+        return rm.testItem(self.api.service.apiInfo_v1, "/v1/apiInfo",{}
+            ).addBoth(_cb)
+
+
+
+
+    def test_jsonBody(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "success",
+                "data": {"status": "OK"}}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        params = {
+            "message": "hi",
+            "username": "hawkowl"
+        }
+
+        return rm.testItem(self.api.service.api_v1_motd_POST, "/v1/motd/POST",
+            params, method="POST", useBody=True).addBoth(_cb)
+
+
+    def test_getService(self):
+
+        service = self.api.getService()
+        self.assertIsInstance(service, haddock.api.DefaultServiceClass)
+    
+
+    def test_getResource(self):
+
+        resource = self.api.getResource()
+        self.assertIsInstance(resource, Resource)
+
+
+    def test_getApp(self):
+
+        app = self.api.getApp()
+        self.assertIsInstance(app, Klein)
 
 
 
@@ -82,6 +200,11 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
+    def test_getService(self):
+
+        service = self.api.getService()
+        self.assertIsInstance(service, ExampleServiceClass)
+
 
 class ExampleServiceClass(object):
 
@@ -104,11 +227,13 @@ class ExampleServiceClass(object):
         return {"temperature": 30, "windSpeed": 20, "isRaining": False}
 
 
+class CompletelyBlankServiceClass(object):
+    pass
+
+
 
 class APIExample(object):
-
     class v1(object):
-
         def __init__(self, outer):
             pass
 
@@ -131,7 +256,6 @@ class APIExample(object):
             return {"status": "OK"}
 
     class v2(object):
-
         def __init__(self, outer):
 
             self.motd_GET = outer.v1.motd_GET
@@ -143,3 +267,60 @@ class APIExample(object):
         def motd_POST(service, request, params):
 
             return {"status": "BRILLIANT"}
+
+
+class MissingVersionFunctionAPIExample(object):
+    class v1(object):
+        def __init__(self, outer):
+            pass
+
+        def weather_GET(service, request, params):
+
+            return service.doSomething()
+
+        def motd_GET(service, request, params):
+
+            return service.motd
+
+        def motd_POST(service, request, params):
+
+            service.motd = {
+                "message": params["message"],
+                "setBy": params["username"],
+                "setWhen": time.time()
+            }
+
+            return {"status": "OK"}
+
+    class v2(object):
+        def __init__(self, outer):
+
+            self.motd_GET = outer.v1.motd_GET
+
+        def weather_GET(service, request, params):
+
+            return {"temperature": 30, "windSpeed": 20, "isRaining": "YES"}
+
+
+class MissingVersionClassAPIExample(object):
+    class v1(object):
+        def __init__(self, outer):
+            pass
+
+        def weather_GET(service, request, params):
+
+            return service.doSomething()
+
+        def motd_GET(service, request, params):
+
+            return service.motd
+
+        def motd_POST(service, request, params):
+
+            service.motd = {
+                "message": params["message"],
+                "setBy": params["username"],
+                "setWhen": time.time()
+            }
+
+            return {"status": "OK"}

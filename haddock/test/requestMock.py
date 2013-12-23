@@ -102,7 +102,7 @@ def requestMock(path, method="GET", host="localhost", port=8080, isSecure=False,
     return request
 
 
-def testItem(item, path, params):
+def testItem(item, path, params, method="GET", useBody=False):
 
     def _cb(result):
 
@@ -115,6 +115,9 @@ def testItem(item, path, params):
 
         return result
 
-    myPath = requestMock(path, body=json.dumps(params), args=params)
+    if useBody:
+        myPath = requestMock(path, body=json.dumps(params), method=method)
+    else:
+        myPath = requestMock(path, args=params, method=method)
  
     return maybeDeferred(item, myPath).addCallback(_cb)

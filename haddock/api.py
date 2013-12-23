@@ -17,6 +17,27 @@ import json
 import os, sys, traceback
 
 
+class APIError(Exception):
+    code = 500
+
+    def __init__(self, message, code=None):
+        super(APIError, self).__init__(message)
+        if code is not None:
+            self.code = code
+
+class BadRequestParams(APIError):
+    code = 400
+
+class BadResponseParams(APIError):
+    code = 500
+
+class MissingHaddockAPIFunction(Exception):
+    pass
+
+class MissingHaddockAPIVersionClass(Exception):
+    pass
+
+
 class DefaultServiceClass(object):
     """
     Service object!
@@ -69,7 +90,7 @@ class API(object):
             if hasattr(APIClass, "v%s" % (version,)):
                 APIVersion = getattr(APIClass, "v%s" % (version))(APIClass)
             else:
-                raise Exception("No v%s" % (version,))
+                raise MissingHaddockAPIVersionClass("No v%s" % (version,))
 
             for api in self.config["api"]:
                 apiProcessors = []
@@ -95,7 +116,7 @@ class API(object):
                 apiInfo.__name__ = "v%s_apiInfo" % (version,)
                 route = _makeRoute(self.service, apiInfo, args, kwargs, None,
                     [apiInfoData, self.jEnv, version, self.config["metadata"]],
-                    None)
+                    self.config["metadata"])
                 setattr(self.service, "apiInfo_v%s" % (version,), route)
 
 
@@ -144,7 +165,8 @@ def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
             sourceClassVersion, "%s_%s" % (API["name"], HTTPType)).im_func)
         APIFunc.__name__ = newFuncName
     else:
-        raise Exception("no %s_%s in v%s" % (API["name"], HTTPType, version))
+        raise MissingHaddockAPIFunction(
+            "no %s_%s in v%s" % (API["name"], HTTPType, version))
 
     if version in APIProcessor["versions"]:
 
@@ -158,21 +180,6 @@ def _createRoutes(service, version, API, APIProcessor, sourceClassVersion,
         setattr(service, newFuncName, route)
 
 
-# The code below is partially based on the equiv in Praekelt's Aludel
-class APIError(Exception):
-    code = 500
-
-    def __init__(self, message, code=None):
-        super(APIError, self).__init__(message)
-        if code is not None:
-            self.code = code
-
-class BadRequestParams(APIError):
-    code = 400
-
-class BadResponseParams(APIError):
-    code = 500
-
 
 def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
                APIMetadata):
@@ -183,6 +190,7 @@ def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
         for item in args:
             if isinstance(item, Request):
                 request = item
+                request.errored = False
 
         if APIMetadata.get("cors"):
             request.setHeader(
@@ -200,7 +208,8 @@ def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
                         params[key] = data[0]
                     params = _getParams(params, APIInfo)
                 elif paramsType == "jsonbody":
-                    requestContent = json.loads(request.content.read())
+                    requestContent = request.content.read()
+                    params = json.loads(requestContent)
                     params = _getParams(params, APIInfo)
 
                 d = maybeDeferred(func, serviceClass, request, params)        
@@ -212,7 +221,7 @@ def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
 
                 return d.addCallback(_formatResponse, request)
             else:
-                return maybeDeferred(func, self, request, overrideParams)
+                return maybeDeferred(func, serviceClass, request, overrideParams)
 
         except Exception as exp:
             return _handleAPIError(Failure(exp), request)
@@ -289,7 +298,7 @@ def _checkParamOptions(item, data, exp):
     paramOptions = item.get("paramOptions", None)
 
     if paramOptions and not data in paramOptions:
-        raise exp("%s isn't part of %s in %s" % (data, repr(paramOptions), key))
+        raise exp("%s isn't part of %s in %s" % (data, repr(paramOptions), item))
 
 
 def _checkReturnParamsDict(result, APIInfo):
@@ -329,6 +338,7 @@ def _getParams(params, APIInfo):
         keys = set(params.keys())
     else:
         keys = set()
+        params = {}
 
     requiredInput = APIInfo.get("requiredParams", set())
     optionalInput = APIInfo.get("optionalParams", set())
@@ -358,7 +368,7 @@ def _getParams(params, APIInfo):
 
 def _handleAPIError(failure, request):
 
-    if request.finished:
+    if request.finished or request.errored:
         # If we've already hit an error, don't return any more.
         return
 
@@ -387,12 +397,13 @@ def _handleAPIError(failure, request):
     }
 
     request.write(json.dumps(response))
+    request.errored = True
     return json.dumps(response)
 
 
 def _formatResponse(result, request):
 
-    if request.finished:
+    if request.finished or request.errored:
         # If we've hit an error, we can't return data, because we've already
         # shut the connection.
         return
