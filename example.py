@@ -28,6 +28,8 @@ class APIExample(object):
 
         def weather_GET(self, request, params):
             # Call a method on your service class.
+            # Note that `self` is a reference to your service class, and not
+            # `APIExample.v1` here! Haddock does this for you.
             return self.doSomething()
 
     class v2(object):
