@@ -144,19 +144,7 @@ class API(object):
 
 def _createRoutes(serviceClass, sourceClassVersion, APIVersion, HTTPType,
                   APIProcessorList, configMetadata, configAPI, configProcessor):
-    """
-    Creates the routes and puts them in the service.
 
-    @param service: The service class to put the routes in.
-    @param version: The version that we are taking the API methods from.
-    @param API: The API we are currently working on, from the API configuration.
-    @param APIProcessor: The processor we are currently working on from the API
-    configuration.
-    @param sourceClassVersion: The source class version we're currently working
-    from.
-    @param apiProcessors: For L{_apiInfo}.
-    @param HTTPType: The HTTP type we are currently working with.
-    """
     sourceClassLocation = "%s_%s" % (configAPI["name"], HTTPType)
     newFuncName = str("api_v%s_%s" % (APIVersion, sourceClassLocation))
 
@@ -190,7 +178,6 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
 
         try:
             if not overrideParams:
-                
                 params["haddockAuth"] = result
 
                 d = maybeDeferred(func, serviceClass, request, params)
@@ -204,10 +191,8 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                 return d
             else:
                 return maybeDeferred(func, serviceClass, request, overrideParams)
-
         except Exception as exp:
             return _handleAPIError(Failure(exp), request)
-
 
     @wraps(func)
     def wrapper(*args, **kw):
@@ -226,7 +211,6 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
             params = None
 
             if not overrideParams:
-
                 paramsType = configProcessor.get("paramsType", "url")
 
                 if paramsType == "url":
@@ -285,7 +269,6 @@ def _verifyReturnParams(result, APIInfo):
     returnFormat = APIInfo.get("returnFormat", "dict")
 
     if returnFormat == "dict":
-
         if isinstance(result, basestring):
             keys = set(json.loads(result).keys())
         else:
@@ -297,7 +280,6 @@ def _verifyReturnParams(result, APIInfo):
         _checkReturnParamsDict(result, APIInfo)
 
     elif returnFormat == "list":
-
         if isinstance(result, basestring):
             items = json.loads(result)
         else:
