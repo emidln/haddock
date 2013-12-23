@@ -22,7 +22,7 @@ The `metadata` contains three things:
 
 - `name`: The computer-friendly name.
 - `friendlyName`: The user-friendly name.
-- `versions`: A list of applicable versions. They don't have to be 1, 2, or whatever - they're just used later on in `api`.
+- `versions`: A list of applicable versions. They don't have to be 1, 2, or whatever - they're just used later on in `api`. Note that there is one special version - "ROOT", which moves all of the endpoints to the root (for example, `/weather`, instead of `/v1/weather`).
 - `apiInfo`: Whether or not you want automatic API documentation generated.
 
 
