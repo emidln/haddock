@@ -397,7 +397,6 @@ def _handleAPIError(failure, request):
         "data": errmessage
     }
 
-    request.write(json.dumps(response))
     request.errored = True
     return json.dumps(response)
 
