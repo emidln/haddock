@@ -194,7 +194,7 @@ def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
 
         if APIMetadata.get("cors"):
             request.setHeader(
-                "Access-Control-Allow-Origin", APIMetadata["cors"])
+                "Access-Control-Allow-Origin", str(APIMetadata["cors"]))
 
         try:
             if not overrideParams:
@@ -219,7 +219,8 @@ def _makeRoute(serviceClass, func, args, kw, APIInfo, overrideParams,
                     d.addCallback(_verifyReturnParams, APIInfo)
                     d.addErrback(_handleAPIError, request)
 
-                return d.addCallback(_formatResponse, request)
+                d.addCallback(_formatResponse, request)
+                return d
             else:
                 return maybeDeferred(func, serviceClass, request, overrideParams)
 
