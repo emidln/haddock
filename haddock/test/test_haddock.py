@@ -263,20 +263,28 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             {}).addBoth(_cb)
 
 
+    def test_authFailureByDefault(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "fail", "data": "Not a real authenticator."}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.getService().api_v1_authtest_GET,
+            "/v1/authtest", {},
+            headers={"Authorization": ["Basic QZxaZGRpbjpvcGVuIHNlc2FtZQ=="]}
+            ).addBoth(_cb)
+
+
     def test_getService(self):
 
         service = self.api.getService()
         self.assertIsInstance(service, ExampleServiceClass)
 
 
-class ExampleServiceClass(object):
-
-    app = Klein()
-
-    @app.route("/content", branch=True)
-    def _staticFile(self, request):
-
-        return File(os.path.join(haddock.basePath, "static", "content"))
+class ExampleServiceClass(DefaultServiceClass):
 
     def __init__(self):
 
@@ -403,12 +411,10 @@ class MissingVersionClassAPIExample(object):
 
 class myServiceClass(DefaultServiceClass):
 
-    users = [
-        {
-            "username": "Aladdin",
-            "password": "open sesame"
-        }
-    ]
+    users = [{
+        "username": "Aladdin",
+        "password": "open sesame"
+    }]
 
     auth = haddock.auth.DefaultHaddockAuthenticator(
         haddock.auth.InMemoryStringSharedSecretSource(users))
