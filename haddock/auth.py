@@ -1,5 +1,6 @@
 from haddock import AuthenticationFailed
-from twisted.internet.defer import succeed
+from twisted.internet import defer
+from twisted.python.failure import Failure
 
 
 class InMemoryStringSharedSecretSource(object):
@@ -11,7 +12,7 @@ class InMemoryStringSharedSecretSource(object):
 
         for user in self.users:
             if user.get("username") == username:
-                return succeed(user)
+                return defer.succeed(user)
 
         raise AuthenticationFailed("Authentication failed.")
 
@@ -26,7 +27,7 @@ class DummySharedSecretSource(object):
 
 class DefaultHaddockAuthenticator(object):
 
-    def __init__(self, sharedSecretSource):
+    def __init__(self, sharedSecretSource, enableHMAC=False):
         """
         Initialise the Haddock Authenticator.
         """
@@ -38,17 +39,18 @@ class DefaultHaddockAuthenticator(object):
         if self.sharedSecretSource:
             d = self.sharedSecretSource.getUserDetails(username)
             return d
-        else:
-            raise AuthenticationFailed("No Authentication Backend")
+
+        raise AuthenticationFailed("No Authentication Backend")
 
 
     def auth_usernameAndPassword(self, username, password, endpoint, params):
 
         def _continue(result):
-            
-            if result.get("username") == username and result.get("password") == password:
-                return True
 
+            if result.get("username") == username and\
+               result.get("password") == password:
+                return defer.succeed(True)
+            
             raise AuthenticationFailed("Authentication failed.")
 
         d = self._getUserDetails(username)

@@ -3,7 +3,7 @@
     "metadata": {
         "name": "APIExample",
         "friendlyName": "HawkOwl's API Example",
-        "versions": [1, 2],
+        "versions": [1, 2, "ROOT"],
         "apiInfo": true,
         "cors": "*"
     },
@@ -60,7 +60,7 @@
             "endpoint": "motd",
             "getProcessors": [
                 {
-                    "versions": [1],
+                    "versions": [1, "ROOT"],
                     "paramsType": "url",
                     "returnFormat": "dict",
                     "returnParams": [

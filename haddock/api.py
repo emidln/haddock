@@ -81,7 +81,10 @@ class API(object):
             apiInfoData = []
 
             if hasattr(APIClass, "v%s" % (version,)):
-                APIVersion = getattr(APIClass, "v%s" % (version))(APIClass)
+                try:
+                    APIVersion = getattr(APIClass, "v%s" % (version,))(APIClass)
+                except TypeError, e:
+                    APIVersion = getattr(APIClass, "v%s" % (version,))()
             else:
                 raise MissingHaddockAPIVersionClass("No v%s" % (version,))
 

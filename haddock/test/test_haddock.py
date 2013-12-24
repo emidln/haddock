@@ -46,6 +46,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
         self.assertIn("api_v2_motd_GET", functions)
         self.assertIn("api_v1_motd_POST", functions)
         self.assertIn("api_v2_motd_POST", functions)
+        self.assertIn("api_vROOT_motd_GET", functions)
 
 
     def test_blankServiceClass(self):
@@ -111,8 +112,6 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
                 MissingVersionFunctionAPIExample, self.config)
         except Exception, e:
             self.assertIsInstance(e, haddock.api.MissingHaddockAPIFunction)
-        else:
-            self.fail()
 
 
     def test_missingClass(self):
@@ -133,6 +132,20 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
 
         return rm.testItem(self.api.getService().apiInfo_v1, "/v1/apiInfo",{}
             ).addBoth(_cb)
+
+
+    def test_rootAPI(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "success", "data": {"message": "a",
+                "setBy": "a", "setWhen": 0}}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.getService().api_vROOT_motd_GET,
+            "/motd", {}).addBoth(_cb)
 
 
     def test_jsonBody(self):
@@ -279,6 +292,27 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
         self.assertIsInstance(service, ExampleServiceClass)
 
 
+
+class HaddockBlankServiceClassTests(unittest.TestCase):
+    """
+    Haddock tests using CompletelyBlankServiceClass, a blank class that is
+    passed in.
+    """
+    def setUp(self):
+        path = os.path.join(os.path.abspath(
+            os.path.dirname(__file__)), 'betterAPI.json')
+        config = json.load(open(path))
+
+        self.api = haddock.api.API(APIExample, config,
+            serviceClass=CompletelyBlankServiceClass())
+
+
+    def test_getApp(self):
+
+        app = self.api.getApp()
+        self.assertIsInstance(app, Klein)
+
+
 class ExampleServiceClass(DefaultServiceClass):
 
     def __init__(self):
@@ -300,8 +334,6 @@ class CompletelyBlankServiceClass(object):
 
 class APIExample(object):
     class v1(object):
-        def __init__(self, outer):
-            pass
 
         def weather_GET(service, request, params):
 
@@ -325,8 +357,6 @@ class APIExample(object):
             return {"status": "OK"}
 
     class v2(object):
-        def __init__(self, outer):
-            pass
 
         def motd_GET(service, request, params):
 
@@ -340,68 +370,46 @@ class APIExample(object):
 
             return json.dumps({"status": "BRILLIANT"})
 
+    class vROOT(object):
+        def motd_GET(service, request, params):
+            return {"message":"a", "setBy": "a", "setWhen": 0}
+
 
 class MissingVersionFunctionAPIExample(object):
     class v1(object):
-        def __init__(self, outer):
-            pass
-
         def weather_GET(service, request, params):
-
-            return service.doSomething()
+            """"""
 
         def motd_GET(service, request, params):
-
-            return service.motd
+            """"""
 
         def motd_POST(service, request, params):
-
-            service.motd = {
-                "message": params["message"],
-                "setBy": params["username"],
-                "setWhen": time.time()
-            }
-
-            return {"status": "OK"}
+            """"""
 
         def authtest_GET(service, request, params):
-            pass
+            """"""
 
     class v2(object):
         def __init__(self, outer):
-
             self.motd_GET = outer.v1.motd_GET
 
         def weather_GET(service, request, params):
-
-            return {"temperature": 30, "windSpeed": 20, "isRaining": "YES"}
+            """"""
 
 
 class MissingVersionClassAPIExample(object):
     class v1(object):
-        def __init__(self, outer):
-            pass
-
         def weather_GET(service, request, params):
-
-            return service.doSomething()
+            """"""
 
         def motd_GET(service, request, params):
-
-            return service.motd
+            """"""
 
         def motd_POST(service, request, params):
-
-            service.motd = {
-                "message": params["message"],
-                "setBy": params["username"],
-                "setWhen": time.time()
-            }
-
-            return {"status": "OK"}
+            """"""
 
         def authtest_GET(service, request, params):
-            pass
+            """"""
 
 
 class myServiceClass(DefaultServiceClass):
