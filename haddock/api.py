@@ -38,7 +38,8 @@ class DefaultServiceClass(object):
     @ivar app: A L{Klein} app.
     """
     app = Klein()
-    auth = haddock.auth.DefaultHaddockAuthenticator()
+    auth = haddock.auth.DefaultHaddockAuthenticator(
+        haddock.auth.DummySharedSecretSource())
 
     @app.route("/content", branch=True)
     def _staticFile(self, request):
@@ -239,7 +240,13 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                             request.getUser(), request.getPassword(),
                             endpointPath, params))
                         authAdditional = request.getUser()
-                        d.addErrback(_handleAPIError, request)
+                    elif authType.lower() == "hmac":
+                        authDetails = base64.decodestring(authDetails)
+                        authUsername, authHMAC = authDetails.split(':', 1)
+                        d.addCallback(lambda _:
+                            serviceClass.auth.auth_usernameAndHMAC(
+                            authUsername, authHMAC))
+                        authAdditional = authUsername
                     else:
                         return _handleAPIError(Failure(AuthenticationRequired(
                             "Malformed Authentication header.")), request)

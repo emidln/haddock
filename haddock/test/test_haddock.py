@@ -11,6 +11,8 @@ from haddock.api import DefaultServiceClass
 
 import haddock
 import haddock.api
+import haddock.auth
+
 import inspect
 import exceptions
 import json
@@ -189,7 +191,9 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
 
         def _cb(result):
 
-            expectedResult = None
+            expectedResult = json.dumps(json.loads("""
+                {"status": "fail", "data": "Authentication failed."}
+            """))
             self.assertEqual(expectedResult, result)
 
         return rm.testItem(self.api.getService().api_v1_authtest_GET,
@@ -397,17 +401,15 @@ class MissingVersionClassAPIExample(object):
             pass
 
 
-class DummyHaddockAuthenticator(object):
-
-    def auth_usernameAndPassword(self, username, password, endpoint, params):
-        
-        if username == "Aladdin" and password == "open sesame":
-            return True
-
-        raise AuthenticationFailed("Incorrect username or password.")
-
-
 class myServiceClass(DefaultServiceClass):
 
-    auth = DummyHaddockAuthenticator()
+    users = [
+        {
+            "username": "Aladdin",
+            "password": "open sesame"
+        }
+    ]
+
+    auth = haddock.auth.DefaultHaddockAuthenticator(
+        haddock.auth.InMemoryStringSharedSecretSource(users))
 
