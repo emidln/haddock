@@ -2,11 +2,9 @@ from twisted.trial import unittest
 from twisted.web.resource import Resource
 
 from klein import Klein
-from twisted.web.static import File
 
 import haddock.test.requestMock as rm
 
-from haddock import AuthenticationFailed
 from haddock.api import DefaultServiceClass
 
 import haddock
@@ -14,12 +12,9 @@ import haddock.api
 import haddock.auth
 
 import inspect
-import exceptions
 import json
-import traceback
 import time
 import os
-import sys
 
 
 

@@ -58,6 +58,9 @@ class DefaultHaddockAuthenticator(object):
 
     def auth_usernameAndHMAC(self, username, HMAC, endpoint, params):
 
+        def _continue(result):
+            pass
+
         d = self._getUserDetails(username)
         d.addCallback(_continue)
         return d

@@ -13,9 +13,8 @@ from jinja2 import Environment, PackageLoader
 
 from copy import copy
 
-from haddock import APIError, BadRequestParams, BadResponseParams, AuthenticationRequired, AuthenticationFailed
+from haddock import BadRequestParams, BadResponseParams, AuthenticationRequired
 
-import inspect
 import json
 import os, sys, traceback
 import base64
@@ -276,11 +275,6 @@ def _verifyReturnParams(result, APIInfo):
     returnFormat = APIInfo.get("returnFormat", "dict")
 
     if returnFormat == "dict":
-        if isinstance(result, basestring):
-            keys = set(json.loads(result).keys())
-        else:
-            keys = set(result.keys())
-
         if not isinstance(result, dict):
             raise BadResponseParams("Result did not match the return format.")
 

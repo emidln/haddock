@@ -1,4 +1,4 @@
-from mock import Mock, call
+from mock import Mock
 
 from StringIO import StringIO
 
@@ -110,7 +110,7 @@ def testItem(item, path, params, method="GET", useBody=False, headers=None):
             res = json.loads(result)
             if res.get("error"):
                 raise HaddockAPIError(res["error"])
-        except Exception, e:
+        except Exception:
             res = result
 
         return result
