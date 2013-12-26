@@ -40,6 +40,3 @@ class HaddockAuthTests(unittest.TestCase):
             None, None)).addErrback(_catch)
 
         return authDeferred
-
-
-
