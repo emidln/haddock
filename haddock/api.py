@@ -31,6 +31,15 @@ class DefaultServiceClass(object):
     app = Klein()
     auth = haddock.auth.DefaultHaddockAuthenticator(
         haddock.auth.DummySharedSecretSource())
+    cors = False
+
+    @app.route("/", methods=["OPTIONS"], branch=True)
+    def _allowOptions(self, request):
+
+        if self.cors:
+            request.setHeader("Access-Control-Allow-Origin", str(self.cors))
+            request.setHeader("Access-Control-Allow-Methods", "GET, POST")
+            request.setHeader("Access-Control-Allow-Headers", "authorization")
 
     @app.route("/content", branch=True)
     def _staticFile(self, request):
@@ -64,6 +73,8 @@ class API(object):
 
         if not hasattr(self.serviceClass, "app"):
             self.serviceClass.app = Klein()
+
+        self.serviceClass.cors = self.config["metadata"].get("cors", False)
 
         showAPIInfo = self.config["metadata"].get("apiInfo", False)
 
