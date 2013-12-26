@@ -9,23 +9,21 @@ class myServiceClass(DefaultServiceClass):
     def __init__(self):
         # Store things in your service class that you want to access in your
         # API's methods.
-        self.motd = {
-            "message": "NO MOTD SET",
-            "setBy": "nobody",
-            "setWhen": 0
-        }
+        self.weather = {"temperature": 30, "windSpeed": 20, "isRaining": False}
 
     def doSomething(self):
         # An example function, called from the inside of the API example.
-        return {"temperature": 30, "windSpeed": 20, "isRaining": False}
+        return self.weather
 
 
 class APIExample(object):
+    # An API is made up of versions - each in a different class, to keep things
+    # a little bit neat.
     class v1(object):
         def weather_GET(self, request, params):
             # Call a method on your service class.
             # Note that `self` is a reference to your service class, and not
-            # `APIExample.v1` here! Haddock does this for you.
+            # `APIExample.v1` here! Haddock changes this for you.
             return self.doSomething()
 
     class v2(object):
@@ -39,7 +37,10 @@ class APIExample(object):
 
         def weather_GET(self, request, params):
             # Just return an object - Haddock will check it according to your
-            # API definition and JSONise it.
+            # API definition and JSONise it. You'll notice that this is
+            # different to what v1 returns - different processors can require
+            # different things. Check APIExample.json to see what makes
+            # Weather v1 and Weather v2 different.
             return {"temperature": 30, "windSpeed": 20, "isRaining": "YES"}
 
 
