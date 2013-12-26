@@ -61,7 +61,7 @@ class DefaultHaddockAuthenticator(object):
     def auth_usernameAndHMAC(self, username, HMAC, endpoint, params):
 
         def _continue(result):
-            pass
+            raise NotImplementedError("Sorry, HMAC isn't implemented yet.")
 
         d = self._getUserDetails(username)
         d.addCallback(_continue)

@@ -14,7 +14,7 @@ class HaddockAuthTests(unittest.TestCase):
             AuthenticationFailed, authenticator.auth_usernameAndPassword,
             "user", "pass", "", {})
 
-    def test_inMemoryStringSharedSecretSource(self):
+    def test_inMemoryStringSharedSecretSourcePassword(self):
 
         def _catch(res):
             self.assertIsInstance(res.value, AuthenticationFailed)
@@ -40,3 +40,29 @@ class HaddockAuthTests(unittest.TestCase):
             None, None)).addErrback(_catch)
 
         return authDeferred
+
+    def test_inMemoryStringSharedSecretSourceHMAC(self):
+
+    	self.skipTest("HMAC isn't implemented yet.")
+
+        def _catch(res):
+            self.assertIsInstance(res.value, AuthenticationFailed)
+
+        users = [
+            {
+                "username": "bob",
+                "password": "42"
+            },
+            {
+                "username": "alice",
+                "password": "wonderland"
+            }
+        ]
+
+        authenticator = auth.DefaultHaddockAuthenticator(
+            auth.InMemoryStringSharedSecretSource(users))
+
+        authDeferred = authenticator.auth_usernameAndHMAC(
+            "alice", "this is not a hmac", None, {}).addErrback(_catch)
+
+        return authDeferred 
