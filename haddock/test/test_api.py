@@ -36,7 +36,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
         res = inspect.getmembers(
             self.api.getService(), predicate=inspect.isfunction)
         functions = []
-        
+
         for item in res:
             functions.append(item[0])
 
@@ -56,7 +56,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             [error] = self.flushLoggedErrors()
             self.assertIsInstance(error.value, AttributeError)
 
-        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(
+            self.api.getService().api_v1_weather_GET,"/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
@@ -70,7 +71,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(
+            self.api.getService().api_v1_weather_GET, "/v1/weather",
             {"unixTimestamp": "1"}).addBoth(_cb)
 
 
@@ -84,7 +86,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(
+            self.api.getService().api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1", "muffin": "yes plz"}
             ).addBoth(_cb)
 
@@ -101,7 +104,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             "username": "hawkowl"
         }
 
-        return rm.testItem(self.api.getService().api_v2_motd_POST, "/v2/motd/POST",
+        return rm.testItem(
+            self.api.getService().api_v2_motd_POST, "/v2/motd/POST",
             params, method="POST", useBody=True).addBoth(_cb)
 
 
@@ -163,7 +167,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             "username": "hawkowl"
         }
 
-        return rm.testItem(self.api.getService().api_v1_motd_POST, "/v1/motd/POST",
+        return rm.testItem(
+            self.api.getService().api_v1_motd_POST, "/v1/motd/POST",
             params, method="POST", useBody=True).addBoth(_cb)
 
 
@@ -176,8 +181,9 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.getService().api_v1_authtest_GET, "/v1/authtest",
-            {}).addBoth(_cb)
+        return rm.testItem(
+            self.api.getService().api_v1_authtest_GET, "/v1/authtest", {}
+            ).addBoth(_cb)
 
 
     def test_authSuccess(self):
@@ -214,7 +220,7 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
 
         service = self.api.getService()
         self.assertIsInstance(service, haddock.api.DefaultServiceClass)
-    
+
 
     def test_getResource(self):
 
@@ -242,6 +248,7 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
         self.api = haddock.api.API(APIExample, config,
             serviceClass=ExampleServiceClass())
 
+
     def test_usesServiceClass(self):
 
         def _cb(result):
@@ -252,7 +259,8 @@ class HaddockExampleServiceClassTests(unittest.TestCase):
             """))
             self.assertEqual(expectedResult, result)
 
-        return rm.testItem(self.api.getService().api_v1_weather_GET, "/v1/weather",
+        return rm.testItem(
+            self.api.getService().api_v1_weather_GET, "/v1/weather",
             {"postcode": "9999", "unixTimestamp": "1"}).addBoth(_cb)
 
 
@@ -313,6 +321,7 @@ class HaddockBlankServiceClassTests(unittest.TestCase):
         self.assertIsInstance(app, Klein)
 
 
+
 class ExampleServiceClass(DefaultServiceClass):
 
     def __init__(self):
@@ -323,8 +332,10 @@ class ExampleServiceClass(DefaultServiceClass):
             "setWhen": 0
         }
 
+
     def doSomething(self):
         return {"temperature": 30, "windSpeed": 20, "isRaining": False}
+
 
 
 class CompletelyBlankServiceClass(object):
@@ -356,6 +367,7 @@ class APIExample(object):
         def authtest_GET(service, request, params):
             return {"status": "OK"}
 
+
     class v2(object):
 
         def motd_GET(service, request, params):
@@ -370,9 +382,11 @@ class APIExample(object):
 
             return json.dumps({"status": "BRILLIANT"})
 
+
     class vROOT(object):
         def motd_GET(service, request, params):
             return {"message":"a", "setBy": "a", "setWhen": 0}
+
 
 
 class MissingVersionFunctionAPIExample(object):
@@ -397,6 +411,7 @@ class MissingVersionFunctionAPIExample(object):
             """"""
 
 
+
 class MissingVersionClassAPIExample(object):
     class v1(object):
         def weather_GET(service, request, params):
@@ -410,6 +425,7 @@ class MissingVersionClassAPIExample(object):
 
         def authtest_GET(service, request, params):
             """"""
+
 
 
 class myServiceClass(DefaultServiceClass):

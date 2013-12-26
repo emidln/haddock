@@ -1,12 +1,13 @@
 from haddock import AuthenticationFailed
 from twisted.internet import defer
-from twisted.python.failure import Failure
+
 
 
 class InMemoryStringSharedSecretSource(object):
 
     def __init__(self, users):
         self.users = users
+
 
     def getUserDetails(self, username):
 
@@ -50,7 +51,7 @@ class DefaultHaddockAuthenticator(object):
             if result.get("username") == username and\
                result.get("password") == password:
                 return defer.succeed(True)
-            
+
             raise AuthenticationFailed("Authentication failed.")
 
         d = self._getUserDetails(username)

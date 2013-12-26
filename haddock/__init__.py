@@ -20,3 +20,9 @@ class AuthenticationRequired(BadRequestParams):
 
 class AuthenticationFailed(BadRequestParams):
     code = 403
+
+class MissingHaddockAPIFunction(Exception):
+    pass
+
+class MissingHaddockAPIVersionClass(Exception):
+    pass

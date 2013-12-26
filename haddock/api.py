@@ -10,23 +10,15 @@ from twisted.web.http import Request
 from twisted.web.static import File
 
 from jinja2 import Environment, PackageLoader
-
 from copy import copy
 
 from haddock import BadRequestParams, BadResponseParams, AuthenticationRequired
+from haddock import MissingHaddockAPIFunction, MissingHaddockAPIVersionClass
 
 import json
 import os, sys, traceback
 import base64
 import haddock.auth
-
-
-
-class MissingHaddockAPIFunction(Exception):
-    pass
-
-class MissingHaddockAPIVersionClass(Exception):
-    pass
 
 
 
@@ -45,6 +37,7 @@ class DefaultServiceClass(object):
 
         return File(os.path.join(os.path.abspath(
             os.path.dirname(__file__)), "static", "content"))
+
 
 
 class API(object):
@@ -82,8 +75,9 @@ class API(object):
 
             if hasattr(APIClass, "v%s" % (version,)):
                 try:
-                    APIVersion = getattr(APIClass, "v%s" % (version,))(APIClass)
-                except TypeError, e:
+                    APIVersion = getattr(
+                        APIClass, "v%s" % (version,))(APIClass)
+                except TypeError:
                     APIVersion = getattr(APIClass, "v%s" % (version,))()
             else:
                 raise MissingHaddockAPIVersionClass("No v%s" % (version,))
@@ -145,8 +139,10 @@ class API(object):
         return self.serviceClass.app
 
 
+
 def _createRoutes(serviceClass, sourceClassVersion, APIVersion, HTTPType,
-                  APIProcessorList, configMetadata, configAPI, configProcessor):
+                  APIProcessorList, configMetadata, configAPI,
+                  configProcessor):
 
     sourceClassLocation = "%s_%s" % (configAPI["name"], HTTPType)
     newFuncName = str("api_v%s_%s" % (APIVersion, sourceClassLocation))
@@ -174,6 +170,7 @@ def _createRoutes(serviceClass, sourceClassVersion, APIVersion, HTTPType,
         APIProcessorList.append((configProcessor, HTTPType))
 
 
+
 def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                configMetadata, configAPI, configProcessor):
 
@@ -193,9 +190,11 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                 d.addCallback(_formatResponse, request)
                 return d
             else:
-                return maybeDeferred(func, serviceClass, request, overrideParams)
+                return maybeDeferred(
+                    func, serviceClass, request, overrideParams)
         except Exception as exp:
             return _handleAPIError(Failure(exp), request)
+
 
     @wraps(func)
     def wrapper(*args, **kw):
@@ -273,6 +272,7 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
     return route(wrapper)
 
 
+
 def _verifyReturnParams(result, APIInfo):
 
     returnFormat = APIInfo.get("returnFormat", "dict")
@@ -296,6 +296,7 @@ def _verifyReturnParams(result, APIInfo):
             _checkReturnParamsDict(item, APIInfo)
 
     return result
+
 
 
 def _normaliseParams(params):
@@ -327,12 +328,15 @@ def _normaliseParams(params):
     return (finishedParams, set(paramKeys))
 
 
+
 def _checkParamOptions(item, data, exp):
 
     paramOptions = item.get("paramOptions", None)
 
     if paramOptions and not data in paramOptions:
-        raise exp("%s isn't part of %s in %s" % (data, repr(paramOptions), item))
+        raise exp(
+            "%s isn't part of %s in %s" % (data, repr(paramOptions), item))
+
 
 
 def _checkReturnParamsDict(result, APIInfo):
@@ -364,6 +368,7 @@ def _checkReturnParamsDict(result, APIInfo):
     if extra:
         raise BadResponseParams("Unexpected response parameters: '%s'" % (
             "', '".join(sorted(extra))))
+
 
 
 def _getParams(params, APIInfo):
@@ -398,6 +403,7 @@ def _getParams(params, APIInfo):
             "', '".join(sorted(extra))))
 
     return params
+
 
 
 def _handleAPIError(failure, request):
@@ -436,6 +442,7 @@ def _handleAPIError(failure, request):
     return json.dumps(response)
 
 
+
 def _formatResponse(result, request):
 
     if request.finished or request.errored:
@@ -451,6 +458,7 @@ def _formatResponse(result, request):
     }
 
     return json.dumps(response)
+
 
 
 def _apiInfo(self, request, args):
