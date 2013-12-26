@@ -36,7 +36,7 @@ setup(
         "twisted", "klein", "api"
         ],
     install_requires=[
-        "klein"
+        "klein", "jinja2"
         ],
     long_description=file('README.rst').read()
 )

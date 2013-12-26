@@ -8,8 +8,6 @@ class APIError(Exception):
 
     def __init__(self, message, code=None):
         super(APIError, self).__init__(message)
-        if code is not None:
-            self.code = code
 
 class BadRequestParams(APIError):
     code = 400
