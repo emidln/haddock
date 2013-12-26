@@ -22,10 +22,6 @@ class myServiceClass(DefaultServiceClass):
 
 class APIExample(object):
     class v1(object):
-        def __init__(self, outer):
-            # `outer` is actually the a reference to the master `APIExample`.
-            pass
-
         def weather_GET(self, request, params):
             # Call a method on your service class.
             # Note that `self` is a reference to your service class, and not
@@ -35,19 +31,26 @@ class APIExample(object):
     class v2(object):
         def __init__(self, outer):
             # `outer` is actually the a reference to the master `APIExample`.
+            # You don't need to have `__init__` defined, but you can do stuff
+            # here if you wanted to!
+            # For example to migrate a processor from v1 to v2, you could do:
+            # self.someapi_GET = outer.v1.someapi_GET
             pass
 
         def weather_GET(self, request, params):
-            # Return an object - Haddock will check it according to your API
-            # definition and JSONise it.
+            # Just return an object - Haddock will check it according to your
+            # API definition and JSONise it.
             return {"temperature": 30, "windSpeed": 20, "isRaining": "YES"}
 
 
 myAPI = API(
     APIExample, # Pass in your API class.
-    json.load(open("APIExample.json")), # Load your API definition and pass it in.
+    json.load(open("APIExample.json")), # Load your API definition and give it
+                                        # to Haddock to build your API with.
     serviceClass=myServiceClass()) # Rather than using the default, pass in an
                                    # instance of your custom service class.
 
-service = myAPI.getApp() # Get a reference to the Klein backbone.
-service.run("127.0.0.1", 8094) # Start up a HTTP server!
+service = myAPI.getApp() # Get a reference to the Klein app. You can also call
+                         # `getResource()` to get a Resource, if you want that
+                         # instead!
+service.run("127.0.0.1", 8094) # Start up a HTTP server using Klein's helper.
