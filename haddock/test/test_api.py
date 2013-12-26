@@ -191,7 +191,8 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
         def _cb(result):
 
             expectedResult = json.dumps(json.loads("""
-                {"status": "success", "data": {"status": "OK"}}
+                {"status": "success",
+                "data": {"canonicalUsername": "aladdin@arug.net"}}
             """))
             self.assertEqual(expectedResult, result)
 
@@ -365,7 +366,7 @@ class APIExample(object):
             return {"status": "OK"}
 
         def authtest_GET(service, request, params):
-            return {"status": "OK"}
+            return {"canonicalUsername": params["haddockAuth"]}
 
 
     class v2(object):
@@ -432,6 +433,7 @@ class myServiceClass(DefaultServiceClass):
 
     users = [{
         "username": "Aladdin",
+        "canonicalUsername": "aladdin@arug.net",
         "password": "open sesame"
     }]
 

@@ -48,9 +48,11 @@ class DefaultHaddockAuthenticator(object):
 
         def _continue(result):
 
-            if result.get("username") == username and\
+            if result.get("username") == username and \
                result.get("password") == password:
-                return defer.succeed(True)
+
+                uName = result.get("canonicalUsername", result.get("Username"))
+                return defer.succeed(uName)
 
             raise AuthenticationFailed("Authentication failed.")
 

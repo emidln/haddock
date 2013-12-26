@@ -27,6 +27,7 @@ class HaddockAuthTests(unittest.TestCase):
             },
             {
                 "username": "alice",
+                "canonicalUsername": "alice@houseofcar.ds",
                 "password": "wonderland"
             }
         ]
@@ -36,6 +37,7 @@ class HaddockAuthTests(unittest.TestCase):
 
         authDeferred = authenticator.auth_usernameAndPassword(
             "alice", "wonderland", None, None)
+        authDeferred.addCallback(self.assertEqual, "alice@houseofcar.ds")
         authDeferred.addCallback(
             lambda _: authenticator.auth_usernameAndPassword("bob", "pass",
             None, None)).addErrback(_catch)

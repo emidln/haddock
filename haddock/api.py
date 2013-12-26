@@ -240,14 +240,12 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                             serviceClass.auth.auth_usernameAndPassword(
                             request.getUser(), request.getPassword(),
                             endpointPath, params))
-                        authAdditional = request.getUser()
                     elif authType.lower() == "hmac":
                         authDetails = base64.decodestring(authDetails)
                         authUsername, authHMAC = authDetails.split(':', 1)
                         d.addCallback(lambda _:
                             serviceClass.auth.auth_usernameAndHMAC(
                             authUsername, authHMAC))
-                        authAdditional = authUsername
                     else:
                         return _handleAPIError(Failure(AuthenticationRequired(
                             "Malformed Authentication header.")), request)
@@ -255,7 +253,8 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                     return _handleAPIError(Failure(AuthenticationRequired(
                         "Authentication required.")), request)
 
-                d.addCallback(lambda _: _run(authAdditional, request, params))
+                d.addCallback(
+                    lambda authAdditional: _run(authAdditional, request, params))
                 d.addErrback(_handleAPIError, request)
                 d.callback(True)
                 return d
