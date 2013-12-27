@@ -142,6 +142,6 @@ Tired of having to document your APIs? Well, with Haddock, you can provide basic
 Then restart your ``planets.py`` and browse to ``http://localhost:8094/v1/apiInfo``. You will get a list of what APIs you have, and some request and response params. It is a bit lacking right now - you'll only have ``name`` in Request Arguments with no other documentation, but you'll find out how to add descriptions and types to this documentation in the more advanced articles.
 
 Going Further
--------------
+=============
 
 Haddock has a lot more functionality - optional parameters, specifying specific return or request parameters, authentication, and even more to do with automatic API documentation. Browse through the other documentation articles to see how to use these features.
