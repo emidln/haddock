@@ -12,6 +12,9 @@ You can get the MIT-licensed code on `GitHub <https://github.com/hawkowl/haddock
 
 Going Fishing, or - An Introduction
 -----------------------------------
+
+A look at Haddock, starting from the ground up.
+
 .. toctree::
    :maxdepth: 2
 
@@ -19,5 +22,8 @@ Going Fishing, or - An Introduction
 
 Specifications
 --------------
+
+Haddock has a lot more functionality - optional parameters, specifying specific return or request parameters, authentication, and even more to do with automatic API documentation. Browse through the other documentation articles to see how to use these features.
+
 .. toctree::
    apidescription

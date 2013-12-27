@@ -45,12 +45,10 @@ class HaddockAuthTests(unittest.TestCase):
         return authDeferred
 
 
-    def test_inMemoryStringSharedSecretSourceHMAC(self):
-
-        self.skipTest("HMAC isn't implemented yet.")
+    def test_inMemoryStringSharedSecretSourceHMACNotImplemented(self):
 
         def _catch(res):
-            self.assertIsInstance(res.value, AuthenticationFailed)
+            self.assertIsInstance(res.value, NotImplementedError)
 
         users = [
             {

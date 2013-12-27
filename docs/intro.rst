@@ -144,4 +144,4 @@ Then restart your ``planets.py`` and browse to ``http://localhost:8094/v1/apiInf
 Going Further
 =============
 
-Haddock has a lot more functionality - optional parameters, specifying specific return or request parameters, authentication, and even more to do with automatic API documentation. Browse through the other documentation articles to see how to use these features.
+The next article is about adding global state to your Haddock API.
