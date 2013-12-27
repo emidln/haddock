@@ -1,7 +1,8 @@
 Haddock
 =======
 
-.. image:: https://travis-ci.org/hawkowl/haddock.png?branch=master   :target: https://travis-ci.org/hawkowl/haddock .. image:: https://coveralls.io/repos/hawkowl/haddock/badge.png?branch=master :target: https://coveralls.io/r/hawkowl/haddock?branch=master 
+.. image:: https://travis-ci.org/hawkowl/haddock.png?branch=master   :target: https://travis-ci.org/hawkowl/haddock
+.. image:: https://coveralls.io/repos/hawkowl/haddock/badge.png?branch=master :target: https://coveralls.io/r/hawkowl/haddock?branch=master 
 
 Haddock is a framework for easily creating APIs. It uses Python and Twisted, and supports both CPython 2.7 and PyPy.
 
