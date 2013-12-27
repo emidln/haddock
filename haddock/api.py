@@ -243,26 +243,30 @@ def _makeRoute(serviceClass, func, endpointPath, keywordArgs, overrideParams,
                 auth = request.getHeader("Authorization")
                 authAdditional = None
 
-                if auth:
-                    authType, authDetails = auth.split()
+                try:
+                    if auth:
+                        authType, authDetails = auth.split()
 
-                    if authType.lower() == "basic":
-                        d.addCallback(lambda _:
-                            serviceClass.auth.auth_usernameAndPassword(
-                            request.getUser(), request.getPassword(),
-                            endpointPath, params))
-                    elif authType.lower() == "hmac":
-                        authDetails = base64.decodestring(authDetails)
-                        authUsername, authHMAC = authDetails.split(':', 1)
-                        d.addCallback(lambda _:
-                            serviceClass.auth.auth_usernameAndHMAC(
-                            authUsername, authHMAC))
+                        if authType.lower() == "basic":
+                            d.addCallback(lambda _:
+                                serviceClass.auth.auth_usernameAndPassword(
+                                request.getUser(), request.getPassword(),
+                                endpointPath, params))
+                        elif authType.lower() == "hmac":
+                            authDetails = base64.decodestring(authDetails)
+                            authUsername, authHMAC = authDetails.split(':', 1)
+                            d.addCallback(lambda _:
+                                serviceClass.auth.auth_usernameAndHMAC(
+                                authUsername, authHMAC))
+                        else:
+                            return _handleAPIError(Failure(AuthenticationRequired(
+                                "Unsupported Authorization type.")), request)
                     else:
                         return _handleAPIError(Failure(AuthenticationRequired(
-                            "Malformed Authentication header.")), request)
-                else:
+                            "Authentication required.")), request)
+                except Exception:
                     return _handleAPIError(Failure(AuthenticationRequired(
-                        "Authentication required.")), request)
+                            "Malformed Authentication header.")), request)                
 
                 d.addCallback(
                     lambda authAdditional: _run(authAdditional, request, params))

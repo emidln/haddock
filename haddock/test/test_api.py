@@ -218,6 +218,36 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             ).addBoth(_cb)
 
 
+    def test_malformedAuthHeader(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "fail", "data": "Malformed Authentication header."}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.getService().api_v1_authtest_GET,
+            "/v1/authtest", {},
+            headers={"Authorization": ["notvalidlol"]}
+            ).addBoth(_cb)
+
+
+    def test_unsupportedAuthType(self):
+
+        def _cb(result):
+
+            expectedResult = json.dumps(json.loads("""
+                {"status": "fail", "data": "Unsupported Authorization type."}
+            """))
+            self.assertEqual(expectedResult, result)
+
+        return rm.testItem(self.api.getService().api_v1_authtest_GET,
+            "/v1/authtest", {},
+            headers={"Authorization": ["digest dfgdf"]}
+            ).addBoth(_cb)
+
+
     def test_cors(self):
 
         resource = KleinResource(self.api.getApp())
