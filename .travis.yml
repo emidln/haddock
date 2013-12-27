@@ -10,6 +10,10 @@ python:
 
 install:
     - pip install -q $TWISTED
+    - pip install coveralls
     - python setup.py -q install
 
-script: trial haddock
+script: coverage run `which trial` haddock
+
+after_success:
+    coveralls
