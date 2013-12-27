@@ -1,10 +1,11 @@
+==========================
 An Introduction To Haddock
 ==========================
 
 Haddock was made to help you create simple APIs that divide cleanly over versions, with minimal fuss - Haddock takes care of routing, assembly, parameter checking and (optionally) authentication for you. All you have to do is provide your business logic.
 
 Installing
-----------
+==========
 
 To install, you simply need to run::
     
@@ -13,12 +14,14 @@ To install, you simply need to run::
 This'll install Haddock and all its dependencies.
 
 A Very Simple Example
----------------------
+=====================
 
 In this introduction, we will create a *Planet Information* API. We will create something that will allow us to query it, and will return some information about planets. So, first, let's define our API.
 
-``planets.json``
-::
+Simple API Definition
+---------------------
+
+Put the following in ``planets.json``::
 
     {
         "metadata": {
@@ -59,9 +62,12 @@ Using this API description, we can figure out that our future API will be at ``/
 
 Now, lets make the processor behind it.
 
-``planets.py``
-::
+Simple Python Implementation
+----------------------------
 
+Put the following in ``planets.py``::
+
+    import json
     from haddock.api import API
 
     class PlanetAPI(object):
@@ -73,4 +79,9 @@ Now, lets make the processor behind it.
     myAPI = API(PlanetAPI, APIDescription)
     myAPI.getApp().run("127.0.0.1", 8094)
 
-This seems very simple - that's because it is!
+This example can be this brief because Haddock takes care of nearly everything else.
+
+So, let's break it down. 
+
+1. First we import ``API`` from ``haddock.api`` - this is what takes care of creating your API from the config.
+1. g
