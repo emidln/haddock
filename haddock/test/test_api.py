@@ -2,6 +2,7 @@ from twisted.trial import unittest
 from twisted.web.resource import Resource
 
 from klein import Klein
+from klein.resource import KleinResource
 
 import haddock.test.requestMock as rm
 
@@ -215,6 +216,17 @@ class HaddockDefaultServiceClassTests(unittest.TestCase):
             "/v1/authtest", {},
             headers={"Authorization": ["Basic QZxaZGRpbjpvcGVuIHNlc2FtZQ=="]}
             ).addBoth(_cb)
+
+
+    def test_cors(self):
+
+        resource = KleinResource(self.api.getApp())
+        request = rm.requestMock("/", method="OPTIONS")
+        result = resource.render(request)
+
+        self.assertEqual(repr(request.setHeader.mock_calls), "[call('Access-Con\
+trol-Allow-Origin', '*'),\n call('Access-Control-Allow-Methods', 'GET, POST'),\
+\n call('Access-Control-Allow-Headers', 'authorization')]")
 
 
     def test_getService(self):
