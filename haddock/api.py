@@ -349,7 +349,8 @@ def _checkParamOptions(item, data, exp):
 
     if paramOptions and not data in paramOptions:
         raise exp(
-            "%s isn't part of %s in %s" % (data, repr(paramOptions), item))
+            "'%s' isn't part of %s in %s" % (data, json.dumps(paramOptions),
+            item["param"]))
 
 
 
