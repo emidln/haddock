@@ -1,0 +1,19 @@
+env:
+    - TWISTED=Twisted==12.1
+    - TWISTED=Twisted==13.2
+    - TWISTED=svn+svn://svn.twistedmatrix.com/svn/Twisted/trunk
+
+language: python
+
+python:
+    - 2.7
+    - pypy
+
+install:
+    - pip install -q $TWISTED
+    - python setup.py -q install
+
+script: trial haddock
+
+notifications:
+  email: false
