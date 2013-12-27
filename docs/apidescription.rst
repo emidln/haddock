@@ -1,7 +1,9 @@
-The Haddock API Description Language
-====================================
+Haddock API Description
+=======================
 
-The API Description Language ends up having two parts - the ``metadata`` and the ``api``. They are laid out like this::
+The Haddock API Description is a standard structure that Haddock uses to build your API. It contains information about your project (``metadata``), your APIs (``api``), the processors behind those APIs (``getProcessors``/``postProcessors``) and parameters that your API takes and responds with (``parameters`` and ``parameterOptions``).
+
+The API Description ends up having two top-level parts - the ``metadata`` and the ``api``. They are laid out like this::
 
     {
         "metadata": {
