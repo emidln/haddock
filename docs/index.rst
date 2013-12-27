@@ -19,6 +19,7 @@ A look at Haddock, starting from the ground up.
    :maxdepth: 2
 
    intro
+   serviceclasses
 
 Specifications
 --------------
