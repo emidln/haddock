@@ -2,9 +2,12 @@ Haddock
 =======
 
 |haddock-ci|_
+
 .. |haddock-ci| image:: https://travis-ci.org/hawkowl/haddock.png?branch=develop
 .. _haddock-ci: https://travis-ci.org/hawkowl/haddock
+
 |haddock-cover|_
+
 .. |haddock-cover| image:: https://coveralls.io/repos/hawkowl/haddock/badge.png?branch=develop
 .. _haddock-cover: https://coveralls.io/r/hawkowl/haddock
 
