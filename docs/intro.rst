@@ -84,4 +84,64 @@ This example can be this brief because Haddock takes care of nearly everything e
 So, let's break it down. 
 
 1. First we import ``API`` from ``haddock.api`` - this is what takes care of creating your API from the config.
-1. g
+2. We then create a ``PlanetAPI`` class, and make a subclass called ``v1``. This corresponds to version 1 of your API.
+3. We then create a method called ``yearlength_GET``. This is done in a form of ``<NAME>_<METHOD>``. It has three parameters - ``self`` (this is special, we'll get to it later), ``request`` (the Twisted.Web Request for the API call) and ``params`` (rather than have to parse them yourself, Haddock does this for you).
+
+Currently, ``yearlength_GET`` does nothing, so lets fill in some basic functionality - for brevity, we'll only support Earth and Pluto.
+::
+
+    def yearlength_GET(self, request, params):
+        planetName = params["name"].lower()
+        if planetName == "earth":
+            return {"seconds": 31536000}
+        elif planetName == "pluto":
+            return {"seconds": 7816176000}
+
+As you can see, we access ``params``, which is a dict of all the things given to you in the API call. This is sorted out by Haddock, according to your API description - it makes sure that all required parameters are there, and throws an error if it is not.
+
+We then return a ``dict`` with our result. You can do this - Haddock will JSONise it automatically for you.
+
+Running
+-------
+
+Let's try and run it!
+
+``python planets.py``
+
+This should print something out like this::
+
+    2013-12-27 11:46:21+0800 [-] Log opened.
+    2013-12-27 11:46:21+0800 [-] Site starting on 8094
+    2013-12-27 11:46:21+0800 [-] Starting factory <twisted.web.server.Site instance at 0x192d998>
+
+This says that the Twisted.Web server behind Haddock has started up, and is on the port we asked it to.
+
+Now, go to ``http://localhost:8094/v1/yearlength?name=earth`` in your web browser. You should get the following back::
+
+    {"status": "success", "data": {"seconds": 31536000}}
+
+Now try ``http://localhost:8094/v1/yearlength`` - that is, without specifying the name.
+::
+
+    {"status": "fail", "data": "Missing request parameters: 'name'"}
+
+As you can see, it fails if we don't pass in what we want.
+
+API Documentation
+-----------------
+
+Tired of having to document your APIs? Well, with Haddock, you can provide basic API documentation *automatically*. Simply go back to your ``planets.json`` and make your ``metadata`` look like this::
+
+    "metadata": {
+        "name": "planetinfo",
+        "friendlyName": "Planet Information",
+        "versions": [1],
+        "apiInfo": true
+    },
+
+Then restart your ``planets.py`` and browse to ``http://localhost:8094/v1/apiInfo``. You will get a list of what APIs you have, and some request and response params. It is a bit lacking right now - you'll only have ``name`` in Request Arguments with no other documentation, but you'll find out how to add descriptions and types to this documentation in the more advanced articles.
+
+Going Further
+-------------
+
+Haddock has a lot more functionality - optional parameters, specifying specific return or request parameters, authentication, and even more to do with automatic API documentation. Browse through the other documentation articles to see how to use these features.
