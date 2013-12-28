@@ -1,6 +1,6 @@
 import os
 
-version = "0.6.0.1"
+version = "0.6.0"
 basePath = os.path.abspath(os.path.dirname(__file__))
 
 class APIError(Exception):
