@@ -1,8 +1,9 @@
-==========================
-An Introduction To Haddock
-==========================
+=====================================
+Introduction - Getting Off The Ground
+=====================================
 
 Haddock was made to help you create simple APIs that divide cleanly over versions, with minimal fuss - Haddock takes care of routing, assembly, parameter checking and (optionally) authentication for you. All you have to do is provide your business logic.
+
 
 Installing
 ==========
@@ -12,6 +13,7 @@ To install, you simply need to run::
     pip install haddock
 
 This'll install Haddock and all its dependencies.
+
 
 A Very Simple Example
 =====================
@@ -140,6 +142,7 @@ Tired of having to document your APIs? Well, with Haddock, you can provide basic
     },
 
 Then restart your ``planets.py`` and browse to ``http://localhost:8094/v1/apiInfo``. You will get a list of what APIs you have, and some request and response params. It is a bit lacking right now - you'll only have ``name`` in Request Arguments with no other documentation, but you'll find out how to add descriptions and types to this documentation in the more advanced articles.
+
 
 Going Further
 =============
