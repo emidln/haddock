@@ -21,6 +21,7 @@ A look at Haddock, starting from the ground up.
    intro
    serviceclasses
    paramschecking
+   authentication
 
 Specifications
 --------------
